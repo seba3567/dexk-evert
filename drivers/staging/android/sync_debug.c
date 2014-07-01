@@ -25,7 +25,10 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/anon_inodes.h>
+<<<<<<< HEAD
 #include <linux/time64.h>
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 #include "sync.h"
 
 #ifdef CONFIG_DEBUG_FS
@@ -35,8 +38,11 @@ static DEFINE_SPINLOCK(sync_timeline_list_lock);
 static LIST_HEAD(sync_fence_list_head);
 static DEFINE_SPINLOCK(sync_fence_list_lock);
 
+<<<<<<< HEAD
 #ifdef CONFIG_DEBUG_TIMELINE
 
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 void sync_timeline_debug_add(struct sync_timeline *obj)
 {
 	unsigned long flags;
@@ -73,6 +79,7 @@ void sync_fence_debug_remove(struct sync_fence *fence)
 	spin_unlock_irqrestore(&sync_fence_list_lock, flags);
 }
 
+<<<<<<< HEAD
 #define DUMP_CHUNK 256
 static char sync_dump_buf[64 * 1024];
 
@@ -102,15 +109,24 @@ void sync_dump(void)
 
 #endif
 
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 static const char *sync_status_str(int status)
 {
 	if (status == 0)
 		return "signaled";
+<<<<<<< HEAD
 
 	if (status > 0)
 		return "active";
 
 	return "error";
+=======
+	else if (status > 0)
+		return "active";
+	else
+		return "error";
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 }
 
 static void sync_print_pt(struct seq_file *s, struct sync_pt *pt, bool fence)
@@ -118,7 +134,11 @@ static void sync_print_pt(struct seq_file *s, struct sync_pt *pt, bool fence)
 	int status = 1;
 	struct sync_timeline *parent = sync_pt_parent(pt);
 
+<<<<<<< HEAD
 	if (test_bit(FENCE_FLAG_SIGNALED_BIT, &pt->base.flags))
+=======
+	if (fence_is_signaled_locked(&pt->base))
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 		status = pt->base.status;
 
 	seq_printf(s, "  %s%spt %s",
@@ -127,16 +147,24 @@ static void sync_print_pt(struct seq_file *s, struct sync_pt *pt, bool fence)
 		   sync_status_str(status));
 
 	if (status <= 0) {
+<<<<<<< HEAD
 		struct timespec64 ts64 =
 			ktime_to_timespec64(pt->base.timestamp);
 
 		seq_printf(s, "@%lld.%09ld", (s64)ts64.tv_sec, ts64.tv_nsec);
+=======
+		struct timeval tv = ktime_to_timeval(pt->base.timestamp);
+		seq_printf(s, "@%ld.%06ld", tv.tv_sec, tv.tv_usec);
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 	}
 
 	if (parent->ops->timeline_value_str &&
 	    parent->ops->pt_value_str) {
 		char value[64];
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 		parent->ops->pt_value_str(pt, value, sizeof(value));
 		seq_printf(s, ": %s", value);
 		if (fence) {
@@ -158,7 +186,10 @@ static void sync_print_obj(struct seq_file *s, struct sync_timeline *obj)
 
 	if (obj->ops->timeline_value_str) {
 		char value[64];
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 		obj->ops->timeline_value_str(obj, value, sizeof(value));
 		seq_printf(s, ": %s", value);
 	}
@@ -180,18 +211,28 @@ static void sync_print_fence(struct seq_file *s, struct sync_fence *fence)
 	unsigned long flags;
 	int i;
 
+<<<<<<< HEAD
 #ifdef CONFIG_SYNC_DEBUG
 	seq_printf(s, "[%pK] %s: %s\n", fence, fence->name,
 		   sync_status_str(atomic_read(&fence->status)));
 #endif
+=======
+	seq_printf(s, "[%p] %s: %s\n", fence, fence->name,
+		   sync_status_str(atomic_read(&fence->status)));
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 
 	for (i = 0; i < fence->num_fences; ++i) {
 		struct sync_pt *pt =
 			container_of(fence->cbs[i].sync_pt,
 				     struct sync_pt, base);
+<<<<<<< HEAD
 		spin_lock_irqsave(pt->base.lock, flags);
 		sync_print_pt(s, pt, true);
 		spin_unlock_irqrestore(pt->base.lock, flags);
+=======
+
+		sync_print_pt(s, pt, true);
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 	}
 
 	spin_lock_irqsave(&fence->wq.lock, flags);
@@ -259,4 +300,32 @@ static __init int sync_debugfs_init(void)
 }
 late_initcall(sync_debugfs_init);
 
+<<<<<<< HEAD
+=======
+#define DUMP_CHUNK 256
+static char sync_dump_buf[64 * 1024];
+void sync_dump(void)
+{
+	struct seq_file s = {
+		.buf = sync_dump_buf,
+		.size = sizeof(sync_dump_buf) - 1,
+	};
+	int i;
+
+	sync_debugfs_show(&s, NULL);
+
+	for (i = 0; i < s.count; i += DUMP_CHUNK) {
+		if ((s.count - i) > DUMP_CHUNK) {
+			char c = s.buf[i + DUMP_CHUNK];
+			s.buf[i + DUMP_CHUNK] = 0;
+			pr_cont("%s", s.buf + i);
+			s.buf[i + DUMP_CHUNK] = c;
+		} else {
+			s.buf[s.count] = 0;
+			pr_cont("%s", s.buf + i);
+		}
+	}
+}
+
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 #endif

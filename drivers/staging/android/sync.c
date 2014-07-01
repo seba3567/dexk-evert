@@ -108,14 +108,15 @@ void sync_timeline_signal(struct sync_timeline *obj)
 	LIST_HEAD(signaled_pts);
 	struct sync_pt *pt, *next;
 
-//	trace_sync_timeline(obj);
+	trace_sync_timeline(obj);
 
 	spin_lock_irqsave(&obj->child_list_lock, flags);
 
 	list_for_each_entry_safe(pt, next, &obj->active_list_head,
 				 active_list) {
 		if (fence_is_signaled_locked(&pt->base))
-			list_del_init(&pt->active_list);
+
+			list_del(&pt->active_list);
 	}
 
 	spin_unlock_irqrestore(&obj->child_list_lock, flags);
@@ -167,7 +168,6 @@ static struct sync_fence *sync_fence_alloc(int size, const char *name)
 	kref_init(&fence->kref);
 #ifdef CONFIG_SYNC_DEBUG
 	strlcpy(fence->name, name, sizeof(fence->name));
-#endif
 
 	init_waitqueue_head(&fence->wq);
 
@@ -202,6 +202,7 @@ struct sync_fence *sync_fence_create(const char *name, struct sync_pt *pt)
 	fence->num_fences = 1;
 	atomic_set(&fence->status, 1);
 
+	fence_get(&pt->base);
 	fence->cbs[0].sync_pt = &pt->base;
 	fence->cbs[0].fence = fence;
 	if (fence_add_callback(&pt->base, &fence->cbs[0].cb,
@@ -281,6 +282,7 @@ struct sync_fence *sync_fence_merge(const char *name,
 		struct fence *pt_a = a->cbs[i_a].sync_pt;
 		struct fence *pt_b = b->cbs[i_b].sync_pt;
 
+
 		if (pt_a->context < pt_b->context) {
 			sync_fence_add_pt(fence, &i, pt_a);
 
@@ -322,6 +324,7 @@ int sync_fence_wake_up_wq(wait_queue_t *curr, unsigned mode,
 
 	wait = container_of(curr, struct sync_fence_waiter, work);
 	list_del_init(&wait->work.task_list);
+<<<<<<< HEAD
 
 	wait->callback(wait->work.private, wait);
 	return 1;
@@ -330,6 +333,11 @@ int sync_fence_wake_up_wq(wait_queue_t *curr, unsigned mode,
 bool sync_fence_signaled(struct sync_fence *fence)
 {
 	return atomic_read(&fence->status) <= 0;
+=======
+
+	wait->callback(wait->work.private, wait);
+	return 1;
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 }
 EXPORT_SYMBOL(sync_fence_signaled);
 
@@ -380,12 +388,17 @@ EXPORT_SYMBOL(sync_fence_cancel_async);
 int sync_fence_wait(struct sync_fence *fence, long timeout)
 {
 	long ret;
+<<<<<<< HEAD
 //	int i;
+=======
+	int i;
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 
 	if (timeout < 0)
 		timeout = MAX_SCHEDULE_TIMEOUT;
 	else
 		timeout = msecs_to_jiffies(timeout);
+<<<<<<< HEAD
 
 //	trace_sync_wait(fence, 1);
 //	for (i = 0; i < fence->num_fences; ++i)
@@ -400,6 +413,22 @@ int sync_fence_wait(struct sync_fence *fence, long timeout)
 	} else if (ret == 0) {
 		if (timeout) {
 			pr_info("fence timeout on [%pK] after %dms\n", fence,
+=======
+
+	trace_sync_wait(fence, 1);
+	for (i = 0; i < fence->num_fences; ++i)
+		trace_sync_pt(fence->cbs[i].sync_pt);
+	ret = wait_event_interruptible_timeout(fence->wq,
+					       atomic_read(&fence->status) <= 0,
+					       timeout);
+	trace_sync_wait(fence, 0);
+
+	if (ret < 0)
+		return ret;
+	else if (ret == 0) {
+		if (timeout) {
+			pr_info("fence timeout on [%p] after %dms\n", fence,
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 				jiffies_to_msecs(timeout));
 			if (jiffies_to_msecs(timeout) >=
 				SYNC_DUMP_TIME_LIMIT)
@@ -410,7 +439,11 @@ int sync_fence_wait(struct sync_fence *fence, long timeout)
 
 	ret = atomic_read(&fence->status);
 	if (ret) {
+<<<<<<< HEAD
 		pr_info("fence error %ld on [%pK]\n", ret, fence);
+=======
+		pr_info("fence error %ld on [%p]\n", ret, fence);
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 		sync_dump();
 	}
 	return ret;
@@ -459,8 +492,11 @@ static bool android_fence_signaled(struct fence *fence)
 	int ret;
 
 	ret = parent->ops->has_signaled(pt);
+<<<<<<< HEAD
 	if (!ret && parent->destroyed)
 		ret = -ENOENT;
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 	if (ret < 0)
 		fence->status = ret;
 	return ret;
@@ -478,6 +514,7 @@ static bool android_fence_enable_signaling(struct fence *fence)
 	return true;
 }
 
+<<<<<<< HEAD
 static void android_fence_disable_signaling(struct fence *fence)
 {
 	struct sync_pt *pt = container_of(fence, struct sync_pt, base);
@@ -485,6 +522,8 @@ static void android_fence_disable_signaling(struct fence *fence)
 	list_del_init(&pt->active_list);
 }
 
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 static int android_fence_fill_driver_data(struct fence *fence,
 					  void *data, int size)
 {
@@ -528,7 +567,10 @@ static const struct fence_ops android_fence_ops = {
 	.get_driver_name = android_fence_get_driver_name,
 	.get_timeline_name = android_fence_get_timeline_name,
 	.enable_signaling = android_fence_enable_signaling,
+<<<<<<< HEAD
 	.disable_signaling = android_fence_disable_signaling,
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 	.signaled = android_fence_signaled,
 	.wait = fence_default_wait,
 	.release = android_fence_release,
@@ -540,10 +582,19 @@ static const struct fence_ops android_fence_ops = {
 static void sync_fence_free(struct kref *kref)
 {
 	struct sync_fence *fence = container_of(kref, struct sync_fence, kref);
+<<<<<<< HEAD
 	int i;
 
 	for (i = 0; i < fence->num_fences; ++i) {
 		fence_remove_callback(fence->cbs[i].sync_pt, &fence->cbs[i].cb);
+=======
+	int i, status = atomic_read(&fence->status);
+
+	for (i = 0; i < fence->num_fences; ++i) {
+		if (status)
+			fence_remove_callback(fence->cbs[i].sync_pt,
+					      &fence->cbs[i].cb);
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 		fence_put(fence->cbs[i].sync_pt);
 	}
 
@@ -670,8 +721,12 @@ static int sync_fill_pt_info(struct fence *fence, void *data, int size)
 static long sync_fence_ioctl_fence_info(struct sync_fence *fence,
 					unsigned long arg)
 {
+<<<<<<< HEAD
 	u8 data_buf[4096] __aligned(sizeof(long));
 	struct sync_fence_info_data *data = (typeof(data))data_buf;
+=======
+	struct sync_fence_info_data *data;
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 	__u32 size;
 	__u32 len = 0;
 	int ret, i;
@@ -687,7 +742,10 @@ static long sync_fence_ioctl_fence_info(struct sync_fence *fence,
 
 #ifdef CONFIG_SYNC_DEBUG
 	strlcpy(data->name, fence->name, sizeof(data->name));
+<<<<<<< HEAD
 #endif
+=======
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 	data->status = atomic_read(&fence->status);
 	if (data->status >= 0)
 		data->status = !data->status;
@@ -721,7 +779,6 @@ static long sync_fence_ioctl(struct file *file, unsigned int cmd,
 			     unsigned long arg)
 {
 	struct sync_fence *fence = file->private_data;
-
 	switch (cmd) {
 	case SYNC_IOC_WAIT:
 		return sync_fence_ioctl_wait(fence, arg);

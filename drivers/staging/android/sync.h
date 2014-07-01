@@ -154,9 +154,13 @@ struct sync_fence_cb {
 struct sync_fence {
 	struct file		*file;
 	struct kref		kref;
+<<<<<<< HEAD
 #ifdef CONFIG_SYNC_DEBUG
 	char			name[64];
 #endif
+=======
+	char			name[32];
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 #ifdef CONFIG_DEBUG_FS
 	struct list_head	sync_fence_list;
 #endif
@@ -345,6 +349,7 @@ int sync_fence_cancel_async(struct sync_fence *fence,
  */
 int sync_fence_wait(struct sync_fence *fence, long timeout);
 
+<<<<<<< HEAD
 #if defined(CONFIG_DEBUG_FS) && defined(CONFIG_DEBUG_TIMELINE)
 void sync_timeline_debug_add(struct sync_timeline *obj);
 void sync_timeline_debug_remove(struct sync_timeline *obj);
@@ -359,6 +364,23 @@ static void inline sync_fence_debug_remove(struct sync_fence *fence) {}
 static void inline sync_dump(void) {}
 #endif
 
+=======
+#ifdef CONFIG_DEBUG_FS
+
+extern void sync_timeline_debug_add(struct sync_timeline *obj);
+extern void sync_timeline_debug_remove(struct sync_timeline *obj);
+extern void sync_fence_debug_add(struct sync_fence *fence);
+extern void sync_fence_debug_remove(struct sync_fence *fence);
+extern void sync_dump(void);
+
+#else
+# define sync_timeline_debug_add(obj)
+# define sync_timeline_debug_remove(obj)
+# define sync_fence_debug_add(fence)
+# define sync_fence_debug_remove(fence)
+# define sync_dump()
+#endif
+>>>>>>> 0f0d8406fb9c (android: convert sync to fence api, v6)
 int sync_fence_wake_up_wq(wait_queue_t *curr, unsigned mode,
 				 int wake_flags, void *key);
 
