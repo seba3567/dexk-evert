@@ -61,7 +61,6 @@ static unsigned long allocstall_threshold = 70;
 module_param_named(allocstall_threshold, allocstall_threshold,
 			ulong, S_IRUGO | S_IWUSR);
 
-
 static struct vmpressure global_vmpressure;
 BLOCKING_NOTIFIER_HEAD(vmpressure_notifier);
 
@@ -174,7 +173,6 @@ out:
 		 scanned, reclaimed);
 
 	return pressure;
-
 }
 
 static unsigned long vmpressure_account_stall(unsigned long pressure,
@@ -337,8 +335,16 @@ void vmpressure_global(gfp_t gfp, unsigned long scanned,
 		return;
 
 	spin_lock(&vmpr->sr_lock);
+	if (!vmpr->scanned)
+		calculate_vmpressure_win();
+
 	vmpr->scanned += scanned;
 	vmpr->reclaimed += reclaimed;
+
+	if (!current_is_kswapd())
+		vmpr->stall += scanned;
+
+	stall = vmpr->stall;
 	scanned = vmpr->scanned;
 	reclaimed = vmpr->reclaimed;
 	spin_unlock(&vmpr->sr_lock);
@@ -349,9 +355,11 @@ void vmpressure_global(gfp_t gfp, unsigned long scanned,
 	spin_lock(&vmpr->sr_lock);
 	vmpr->scanned = 0;
 	vmpr->reclaimed = 0;
+	vmpr->stall = 0;
 	spin_unlock(&vmpr->sr_lock);
 
 	pressure = vmpressure_calc_pressure(scanned, reclaimed);
+	pressure = vmpressure_account_stall(pressure, stall, scanned);
 	vmpressure_notify(pressure);
 }
 
