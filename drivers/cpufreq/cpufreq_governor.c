@@ -253,7 +253,7 @@ static void dbs_timer(struct work_struct *work)
 	if (!need_load_eval(cdbs->shared, sampling_rate))
 		modify_all = false;
 
-	delay = dbs_data->cdata->gov_dbs_timer(cdbs, dbs_data, modify_all);
+	delay = dbs_data->cdata->gov_dbs_timer(policy, modify_all);
 	gov_queue_work(dbs_data, policy, delay, modify_all);
 
 unlock:
@@ -365,12 +365,7 @@ static int cpufreq_governor_init(struct cpufreq_policy *policy,
 
 	return 0;
 
-<<<<<<< HEAD
 reset_gdbs_data:
-=======
-	kobject_put(&dbs_data->attr_set.kobj);
-
->>>>>>> f1d14347141a (cpufreq: Fix kobject memleak)
 	policy->governor_data = NULL;
 
 	if (!have_governor_per_policy())

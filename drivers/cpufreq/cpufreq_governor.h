@@ -261,7 +261,12 @@ struct dbs_governor {
 
 	struct cpu_dbs_info *(*get_cpu_cdbs)(int cpu);
 	void *(*get_cpu_dbs_info_s)(int cpu);
+<<<<<<< HEAD
 	unsigned int (*gov_dbs_timer)(struct cpufreq_policy *policy);
+=======
+	unsigned int (*gov_dbs_timer)(struct cpufreq_policy *policy,
+				      bool modify_all);
+>>>>>>> fd488f1ecfa5 (cpufreq: governor: Pass policy as argument to ->gov_dbs_timer())
 	void (*gov_check_cpu)(int cpu, unsigned int load);
 	int (*init)(struct dbs_data *dbs_data, bool notify);
 	void (*exit)(struct dbs_data *dbs_data, bool notify);
