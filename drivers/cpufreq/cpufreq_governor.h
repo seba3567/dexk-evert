@@ -18,7 +18,10 @@
 #define _CPUFREQ_GOVERNOR_H
 
 #include <linux/atomic.h>
+<<<<<<< HEAD
 #include <linux/irq_work.h>
+=======
+>>>>>>> 248e1e244b9a (cpufreq: governor: Use lockless timer function)
 #include <linux/cpufreq.h>
 #include <linux/kernel_stat.h>
 #include <linux/module.h>
@@ -183,6 +186,7 @@ struct policy_dbs_info {
 	struct mutex timer_mutex;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	u64 last_sample_time;
 	s64 sample_delay_ns;
 	atomic_t work_count;
@@ -201,8 +205,10 @@ struct policy_dbs_info {
 	 */
 	spinlock_t timer_lock;
 
+=======
+>>>>>>> 248e1e244b9a (cpufreq: governor: Use lockless timer function)
 	ktime_t time_stamp;
-	unsigned int skip_work;
+	atomic_t skip_work;
 	struct work_struct work;
 >>>>>>> 5f3ff4724e67 (cpufreq: governor: replace per-CPU delayed work with timers)
 };
