@@ -182,6 +182,7 @@ struct policy_dbs_info {
 	 */
 	struct mutex timer_mutex;
 
+<<<<<<< HEAD
 	u64 last_sample_time;
 	s64 sample_delay_ns;
 	atomic_t work_count;
@@ -193,6 +194,17 @@ struct policy_dbs_info {
 	/* Status indicators */
 	bool is_shared;		/* This object is used by multiple CPUs */
 	bool work_in_progress;	/* Work is being queued up or in progress */
+=======
+	/*
+	 * Per policy lock that serializes access to queuing work from timer
+	 * handlers.
+	 */
+	spinlock_t timer_lock;
+
+	ktime_t time_stamp;
+	unsigned int skip_work;
+	struct work_struct work;
+>>>>>>> 5f3ff4724e67 (cpufreq: governor: replace per-CPU delayed work with timers)
 };
 
 static inline void gov_update_sample_delay(struct policy_dbs_info *policy_dbs,
@@ -213,8 +225,13 @@ struct cpu_dbs_info {
 	 * wake-up from idle.
 	 */
 	unsigned int prev_load;
+<<<<<<< HEAD
 	struct update_util_data update_util;
 	struct policy_dbs_info *policy_dbs;
+=======
+	struct timer_list timer;
+	struct cpu_common_dbs_info *shared;
+>>>>>>> 5f3ff4724e67 (cpufreq: governor: replace per-CPU delayed work with timers)
 };
 
 struct od_cpu_dbs_info_s {
@@ -315,9 +332,19 @@ static ssize_t show_sampling_rate_min_gov_pol				\
 	return sprintf(buf, "%u\n", dbs_data->min_sampling_rate);	\
 }
 
+<<<<<<< HEAD
 extern struct mutex dbs_data_mutex;
 void dbs_check_cpu(struct cpufreq_policy *policy);
 int cpufreq_governor_dbs(struct cpufreq_policy *policy, unsigned int event);
+=======
+extern struct mutex cpufreq_governor_lock;
+
+void gov_add_timers(struct cpufreq_policy *policy, unsigned int delay);
+void gov_cancel_work(struct cpu_common_dbs_info *shared);
+void dbs_check_cpu(struct dbs_data *dbs_data, int cpu);
+int cpufreq_governor_dbs(struct cpufreq_policy *policy,
+		struct common_dbs_data *cdata, unsigned int event);
+>>>>>>> 5f3ff4724e67 (cpufreq: governor: replace per-CPU delayed work with timers)
 void od_register_powersave_bias_handler(unsigned int (*f)
 		(struct cpufreq_policy *, unsigned int, unsigned int),
 		unsigned int powersave_bias);
