@@ -19,9 +19,13 @@
 
 #include <linux/atomic.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <linux/irq_work.h>
 =======
 >>>>>>> 248e1e244b9a (cpufreq: governor: Use lockless timer function)
+=======
+#include <linux/irq_work.h>
+>>>>>>> a66dec8f135c (cpufreq: governor: Replace timers with utilization update callbacks)
 #include <linux/cpufreq.h>
 #include <linux/kernel_stat.h>
 #include <linux/module.h>
@@ -187,6 +191,7 @@ struct policy_dbs_info {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	u64 last_sample_time;
 	s64 sample_delay_ns;
 	atomic_t work_count;
@@ -208,15 +213,27 @@ struct policy_dbs_info {
 =======
 >>>>>>> 248e1e244b9a (cpufreq: governor: Use lockless timer function)
 	ktime_t time_stamp;
+=======
+	u64 last_sample_time;
+	s64 sample_delay_ns;
+>>>>>>> a66dec8f135c (cpufreq: governor: Replace timers with utilization update callbacks)
 	atomic_t skip_work;
+	struct irq_work irq_work;
 	struct work_struct work;
 >>>>>>> 5f3ff4724e67 (cpufreq: governor: replace per-CPU delayed work with timers)
 };
 
+<<<<<<< HEAD
 static inline void gov_update_sample_delay(struct policy_dbs_info *policy_dbs,
 					   unsigned int delay_us)
 {
 	policy_dbs->sample_delay_ns = delay_us * NSEC_PER_USEC;
+=======
+static inline void gov_update_sample_delay(struct cpu_common_dbs_info *shared,
+					   unsigned int delay_us)
+{
+	shared->sample_delay_ns = delay_us * NSEC_PER_USEC;
+>>>>>>> a66dec8f135c (cpufreq: governor: Replace timers with utilization update callbacks)
 }
 
 /* Per cpu structures */
@@ -232,10 +249,14 @@ struct cpu_dbs_info {
 	 */
 	unsigned int prev_load;
 <<<<<<< HEAD
+<<<<<<< HEAD
 	struct update_util_data update_util;
 	struct policy_dbs_info *policy_dbs;
 =======
 	struct timer_list timer;
+=======
+	struct update_util_data update_util;
+>>>>>>> a66dec8f135c (cpufreq: governor: Replace timers with utilization update callbacks)
 	struct cpu_common_dbs_info *shared;
 >>>>>>> 5f3ff4724e67 (cpufreq: governor: replace per-CPU delayed work with timers)
 };
@@ -285,11 +306,15 @@ struct dbs_governor {
 	struct cpu_dbs_info *(*get_cpu_cdbs)(int cpu);
 	void *(*get_cpu_dbs_info_s)(int cpu);
 <<<<<<< HEAD
+<<<<<<< HEAD
 	unsigned int (*gov_dbs_timer)(struct cpufreq_policy *policy);
 =======
 	unsigned int (*gov_dbs_timer)(struct cpufreq_policy *policy,
 				      bool modify_all);
 >>>>>>> fd488f1ecfa5 (cpufreq: governor: Pass policy as argument to ->gov_dbs_timer())
+=======
+	unsigned int (*gov_dbs_timer)(struct cpufreq_policy *policy);
+>>>>>>> a66dec8f135c (cpufreq: governor: Replace timers with utilization update callbacks)
 	void (*gov_check_cpu)(int cpu, unsigned int load);
 	int (*init)(struct dbs_data *dbs_data, bool notify);
 	void (*exit)(struct dbs_data *dbs_data, bool notify);
@@ -344,9 +369,6 @@ void dbs_check_cpu(struct cpufreq_policy *policy);
 int cpufreq_governor_dbs(struct cpufreq_policy *policy, unsigned int event);
 =======
 extern struct mutex cpufreq_governor_lock;
-
-void gov_add_timers(struct cpufreq_policy *policy, unsigned int delay);
-void gov_cancel_work(struct cpu_common_dbs_info *shared);
 void dbs_check_cpu(struct dbs_data *dbs_data, int cpu);
 int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		struct common_dbs_data *cdata, unsigned int event);
