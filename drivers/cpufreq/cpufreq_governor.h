@@ -41,75 +41,6 @@
 /* Ondemand Sampling types */
 enum {OD_NORMAL_SAMPLE, OD_SUB_SAMPLE};
 
-/*
- * Macro for creating governors sysfs routines
- *
- * - gov_sys: One governor instance per whole system
- * - gov_pol: One governor instance per policy
- */
-
-/* Create attributes */
-#define gov_sys_attr_ro(_name)						\
-static struct kobj_attribute _name##_gov_sys =				\
-__ATTR(_name, 0444, show_##_name##_gov_sys, NULL)
-
-#define gov_sys_attr_rw(_name)						\
-static struct kobj_attribute _name##_gov_sys =				\
-__ATTR(_name, 0644, show_##_name##_gov_sys, store_##_name##_gov_sys)
-
-#define gov_pol_attr_ro(_name)						\
-static struct freq_attr _name##_gov_pol =				\
-__ATTR(_name, 0444, show_##_name##_gov_pol, NULL)
-
-#define gov_pol_attr_rw(_name)						\
-static struct freq_attr _name##_gov_pol =				\
-__ATTR(_name, 0644, show_##_name##_gov_pol, store_##_name##_gov_pol)
-
-#define gov_sys_pol_attr_rw(_name)					\
-	gov_sys_attr_rw(_name);						\
-	gov_pol_attr_rw(_name)
-
-#define gov_sys_pol_attr_ro(_name)					\
-	gov_sys_attr_ro(_name);						\
-	gov_pol_attr_ro(_name)
-
-/* Create show/store routines */
-#define show_one(_gov, file_name)					\
-static ssize_t show_##file_name##_gov_sys				\
-(struct kobject *kobj, struct kobj_attribute *attr, char *buf)		\
-{									\
-	struct _gov##_dbs_tuners *tuners = _gov##_dbs_gov.gdbs_data->tuners; \
-	return sprintf(buf, "%u\n", tuners->file_name);			\
-}									\
-									\
-static ssize_t show_##file_name##_gov_pol				\
-(struct cpufreq_policy *policy, char *buf)				\
-{									\
-	struct policy_dbs_info *policy_dbs = policy->governor_data;	\
-	struct dbs_data *dbs_data = policy_dbs->dbs_data;		\
-	struct _gov##_dbs_tuners *tuners = dbs_data->tuners;		\
-	return sprintf(buf, "%u\n", tuners->file_name);			\
-}
-
-#define store_one(_gov, file_name)					\
-static ssize_t store_##file_name##_gov_sys				\
-(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) \
-{									\
-	struct dbs_data *dbs_data = _gov##_dbs_gov.gdbs_data;		\
-	return store_##file_name(dbs_data, buf, count);			\
-}									\
-									\
-static ssize_t store_##file_name##_gov_pol				\
-(struct cpufreq_policy *policy, const char *buf, size_t count)		\
-{									\
-	struct policy_dbs_info *policy_dbs = policy->governor_data;	\
-	return store_##file_name(policy_dbs->dbs_data, buf, count);			\
-}
-
-#define show_store_one(_gov, file_name)					\
-show_one(_gov, file_name);						\
-store_one(_gov, file_name)
-
 /* create helper routines */
 #define define_get_cpu_dbs_routines(_dbs_info)				\
 static struct cpu_dbs_info *get_cpu_cdbs(int cpu)			\
@@ -223,8 +154,8 @@ struct od_cpu_dbs_info_s {
 	struct cpu_dbs_info cdbs;
 	struct cpufreq_frequency_table *freq_table;
 	unsigned int freq_lo;
-	unsigned int freq_lo_jiffies;
-	unsigned int freq_hi_jiffies;
+	unsigned int freq_lo_delay_us;
+	unsigned int freq_hi_delay_us;
 	unsigned int sample_type:1;
 };
 
@@ -283,33 +214,6 @@ struct od_ops {
 	void (*freq_increase)(struct cpufreq_policy *policy, unsigned int freq);
 };
 
-static inline int delay_for_sampling_rate(unsigned int sampling_rate)
-{
-	int delay = usecs_to_jiffies(sampling_rate);
-
-	/* We want all CPUs to do sampling nearly on same jiffy */
-	if (num_online_cpus() > 1)
-		delay -= jiffies % delay;
-
-	return delay;
-}
-
-#define declare_show_sampling_rate_min(_gov)				\
-static ssize_t show_sampling_rate_min_gov_sys				\
-(struct kobject *kobj, struct kobj_attribute *attr, char *buf)		\
-{									\
-	struct dbs_data *dbs_data = _gov##_dbs_gov.gdbs_data;		\
-	return sprintf(buf, "%u\n", dbs_data->min_sampling_rate);	\
-}									\
-									\
-static ssize_t show_sampling_rate_min_gov_pol				\
-(struct cpufreq_policy *policy, char *buf)				\
-{									\
-	struct policy_dbs_info *policy_dbs = policy->governor_data;	\
-	struct dbs_data *dbs_data = policy_dbs->dbs_data;		\
-	return sprintf(buf, "%u\n", dbs_data->min_sampling_rate);	\
-}
-
 extern struct mutex dbs_data_mutex;
 unsigned int dbs_update(struct cpufreq_policy *policy);
 int cpufreq_governor_dbs(struct cpufreq_policy *policy, unsigned int event);
@@ -320,3 +224,4 @@ void od_unregister_powersave_bias_handler(void);
 ssize_t store_sampling_rate(struct dbs_data *dbs_data, const char *buf,
 			    size_t count);
 #endif /* _CPUFREQ_GOVERNOR_H */
+
