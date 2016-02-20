@@ -41,18 +41,6 @@
 /* Ondemand Sampling types */
 enum {OD_NORMAL_SAMPLE, OD_SUB_SAMPLE};
 
-/* create helper routines */
-#define define_get_cpu_dbs_routines(_dbs_info)				\
-static struct cpu_dbs_info *get_cpu_cdbs(int cpu)			\
-{									\
-	return &per_cpu(_dbs_info, cpu).cdbs;				\
-}									\
-									\
-static void *get_cpu_dbs_info_s(int cpu)				\
-{									\
-	return &per_cpu(_dbs_info, cpu);				\
-}
-
 /*
  * Abbreviations:
  * dbs: used as a shortform for demand based switching It helps to keep variable
@@ -151,14 +139,6 @@ struct cpu_dbs_info {
 	struct policy_dbs_info *policy_dbs;
 };
 
-struct od_cpu_dbs_info_s {
-	struct cpu_dbs_info cdbs;
-};
-
-struct cs_cpu_dbs_info_s {
-	struct cpu_dbs_info cdbs;
-};
-
 /* Per policy Governors sysfs tunables */
 struct od_dbs_tuners {
 	unsigned int powersave_bias;
@@ -172,10 +152,6 @@ struct cs_dbs_tuners {
 /* Common Governor data across policies */
 struct dbs_governor {
 	struct cpufreq_governor gov;
-
-	#define GOV_ONDEMAND		0
-	#define GOV_CONSERVATIVE	1
-	int governor;
 	struct kobj_type kobj_type;
 
 	/*
@@ -184,17 +160,12 @@ struct dbs_governor {
 	 */
 	struct dbs_data *gdbs_data;
 
-	struct cpu_dbs_info *(*get_cpu_cdbs)(int cpu);
-	void *(*get_cpu_dbs_info_s)(int cpu);
 	unsigned int (*gov_dbs_timer)(struct cpufreq_policy *policy);
 	struct policy_dbs_info *(*alloc)(void);
 	void (*free)(struct policy_dbs_info *policy_dbs);
 	int (*init)(struct dbs_data *dbs_data, bool notify);
 	void (*exit)(struct dbs_data *dbs_data, bool notify);
 	void (*start)(struct cpufreq_policy *policy);
-
-	/* Governor specific ops, see below */
-	void *gov_ops;
 };
 
 static inline struct dbs_governor *dbs_governor_of(struct cpufreq_policy *policy)
@@ -202,12 +173,10 @@ static inline struct dbs_governor *dbs_governor_of(struct cpufreq_policy *policy
 	return container_of(policy->governor, struct dbs_governor, gov);
 }
 
-/* Governor specific ops, will be passed to dbs_data->gov_ops */
+/* Governor specific operations */
 struct od_ops {
-	void (*powersave_bias_init_cpu)(int cpu);
 	unsigned int (*powersave_bias_target)(struct cpufreq_policy *policy,
 			unsigned int freq_next, unsigned int relation);
-	void (*freq_increase)(struct cpufreq_policy *policy, unsigned int freq);
 };
 
 extern struct mutex dbs_data_mutex;
@@ -219,6 +188,7 @@ void od_register_powersave_bias_handler(unsigned int (*f)
 void od_unregister_powersave_bias_handler(void);
 ssize_t store_sampling_rate(struct dbs_data *dbs_data, const char *buf,
 			    size_t count);
-void gov_update_cpu_data(struct dbs_governor *gov, struct dbs_data *dbs_data);
+void gov_update_cpu_data(struct dbs_data *dbs_data);
 #endif /* _CPUFREQ_GOVERNOR_H */
+
 
