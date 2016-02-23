@@ -73,15 +73,24 @@ static inline struct hlist_bl_head *mb_cache_entry_head(struct mb_cache *cache,
  * @cache - cache where the entry should be created
  * @mask - gfp mask with which the entry should be allocated
  * @key - key of the entry
+<<<<<<< HEAD
  * @value - value of the entry
  * @reusable - is the entry reusable by others?
+=======
+ * @block - block that contains data
+ * @reusable - is the block reusable by other inodes?
+>>>>>>> fc94737de5fe (mbcache: add reusable flag to cache entries)
  *
  * Creates entry in @cache with key @key and value @value. The function returns
  * -EBUSY if entry with the same key and value already exists in cache.
  * Otherwise 0 is returned.
  */
 int mb_cache_entry_create(struct mb_cache *cache, gfp_t mask, u32 key,
+<<<<<<< HEAD
 			  u64 value, bool reusable)
+=======
+			  sector_t block, bool reusable)
+>>>>>>> fc94737de5fe (mbcache: add reusable flag to cache entries)
 {
 	struct mb_cache_entry *entry, *dup;
 	struct hlist_bl_node *dup_node;
@@ -99,8 +108,22 @@ int mb_cache_entry_create(struct mb_cache *cache, gfp_t mask, u32 key,
 	if (cache->c_entry_count >= 2*cache->c_max_entries)
 		mb_cache_shrink(cache, SYNC_SHRINK_BATCH);
 
+<<<<<<< HEAD
 	bucket = &cache->c_bucket[hash_32(key, cache->c_bucket_bits)];
 	head = &bucket->hash;
+=======
+	entry = kmem_cache_alloc(mb_entry_cache, mask);
+	if (!entry)
+		return -ENOMEM;
+
+	INIT_LIST_HEAD(&entry->e_list);
+	/* One ref for hash, one ref returned */
+	atomic_set(&entry->e_refcnt, 1);
+	entry->e_key = key;
+	entry->e_block = block;
+	entry->e_reusable = reusable;
+	head = mb_cache_entry_head(cache, key);
+>>>>>>> fc94737de5fe (mbcache: add reusable flag to cache entries)
 	hlist_bl_lock(head);
 	list_for_each_entry(tmp_req, &bucket->req_list, lnode) {
 		if (tmp_req->e_key == key && tmp_req->e_value == value) {
@@ -219,6 +242,7 @@ struct mb_cache_entry *mb_cache_entry_find_next(struct mb_cache *cache,
 EXPORT_SYMBOL(mb_cache_entry_find_next);
 
 /*
+<<<<<<< HEAD
  * mb_cache_entry_get - get a cache entry by value (and key)
  * @cache - cache we work with
  * @key - key
@@ -250,6 +274,39 @@ EXPORT_SYMBOL(mb_cache_entry_get);
  * @cache - cache we work with
  * @key - key
  * @value - value
+=======
+ * mb_cache_entry_get - get a cache entry by block number (and key)
+ * @cache - cache we work with
+ * @key - key of block number @block
+ * @block - block number
+ */
+struct mb_cache_entry *mb_cache_entry_get(struct mb_cache *cache, u32 key,
+					  sector_t block)
+{
+	struct hlist_bl_node *node;
+	struct hlist_bl_head *head;
+	struct mb_cache_entry *entry;
+
+	head = mb_cache_entry_head(cache, key);
+	hlist_bl_lock(head);
+	hlist_bl_for_each_entry(entry, node, head, e_hash_list) {
+		if (entry->e_key == key && entry->e_block == block) {
+			atomic_inc(&entry->e_refcnt);
+			goto out;
+		}
+	}
+	entry = NULL;
+out:
+	hlist_bl_unlock(head);
+	return entry;
+}
+EXPORT_SYMBOL(mb_cache_entry_get);
+
+/* mb_cache_entry_delete_block - remove information about block from cache
+ * @cache - cache we work with
+ * @key - key of block @block
+ * @block - block number
+>>>>>>> fc94737de5fe (mbcache: add reusable flag to cache entries)
  *
  * Remove entry from cache @cache with key @key and value @value.
  */
