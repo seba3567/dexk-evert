@@ -15,6 +15,7 @@ CPPFLAGS_vmlinux.lds = -DTEXT_OFFSET=$(TEXT_OFFSET)
 OBJCOPYFLAGS	:=-O binary -R .note -R .note.gnu.build-id -R .comment -S
 GZFLAGS		:=-9
 
+<<<<<<< HEAD
 ifeq ($(CONFIG_RELOCATABLE), y)
 # Pass --no-apply-dynamic-relocs to restore pre-binutils-2.27 behaviour
 # for relative relocs, since this leads to better Image compression
@@ -29,6 +30,10 @@ endif
 ifeq ($(ld-name),lld)
 LDFLAGS_vmlinux		+= -pie
 endif
+=======
+ifneq ($(CONFIG_RELOCATABLE),)
+LDFLAGS_vmlinux		+= -pie -shared -Bsymbolic
+>>>>>>> bb22c997793c (arm64: kernel: force ET_DYN ELF type for CONFIG_RELOCATABLE=y)
 endif
 
 KBUILD_DEFCONFIG := defconfig
