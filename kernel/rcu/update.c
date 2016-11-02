@@ -113,6 +113,18 @@ EXPORT_SYMBOL(rcu_read_lock_sched_held);
 
 #ifndef CONFIG_TINY_RCU
 
+/*
+ * Should expedited grace-period primitives always fall back to their
+ * non-expedited counterparts?  Intended for use within RCU.  Note
+ * that if the user specifies both rcu_expedited and rcu_normal, then
+ * rcu_normal wins.
+ */
+bool rcu_gp_is_normal(void)
+{
+	return READ_ONCE(rcu_normal);
+}
+EXPORT_SYMBOL_GPL(rcu_gp_is_normal);
+
 static atomic_t rcu_expedited_nesting = ATOMIC_INIT(1);
 
 /*
@@ -164,6 +176,9 @@ EXPORT_SYMBOL_GPL(rcu_unexpedite_gp);
 void rcu_end_inkernel_boot(void)
 {
 	rcu_unexpedite_gp();
+
+	if (rcu_normal_after_boot)
+		WRITE_ONCE(rcu_normal, 1);
 }
 
 #ifdef CONFIG_PREEMPT_RCU
