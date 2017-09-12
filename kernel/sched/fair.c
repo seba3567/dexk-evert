@@ -5354,19 +5354,7 @@ struct energy_env {
 	int			dst_cpu;
 	int			trg_cpu;
 	int			energy;
-	int			payoff;
 	struct task_struct	*p;
-	struct {
-		int before;
-		int after;
-		int delta;
-		int diff;
-	} nrg;
-	struct {
-		int before;
-		int after;
-		int delta;
-	} cap;
 };
 
 static int cpu_util_wake(int cpu, struct task_struct *p);
@@ -5599,22 +5587,6 @@ static int sched_group_energy(struct energy_env *eenv)
 					eenv->sg_cap = sg;
 
 				cap_idx = find_new_capacity(eenv, sg->sge);
-
-				if (sg->group_weight == 1) {
-					/* Remove capacity of src CPU (before task move) */
-					if (eenv->trg_cpu == eenv->src_cpu &&
-					    cpumask_test_cpu(eenv->src_cpu, sched_group_cpus(sg))) {
-						eenv->cap.before = sg->sge->cap_states[cap_idx].cap;
-						eenv->cap.delta -= eenv->cap.before;
-					}
-					/* Add capacity of dst CPU  (after task move) */
-					if (eenv->trg_cpu == eenv->dst_cpu &&
-					    cpumask_test_cpu(eenv->dst_cpu, sched_group_cpus(sg))) {
-						eenv->cap.after = sg->sge->cap_states[cap_idx].cap;
-						eenv->cap.delta += eenv->cap.after;
-					}
-				}
-
 				idle_idx = group_idle_state(eenv, sg);
 				group_util = group_norm_util(eenv, sg);
 
@@ -5664,7 +5636,7 @@ next_cpu:
 		continue;
 	}
 
-	eenv->energy = total_energy >> SCHED_CAPACITY_SHIFT;
+	eenv->energy += (total_energy >> SCHED_CAPACITY_SHIFT);
 	return 0;
 }
 
@@ -5682,21 +5654,21 @@ static inline unsigned long task_util(struct task_struct *p);
  * utilization is removed from or added to the system (e.g. task wake-up). If
  * both are specified, the utilization is migrated.
  */
-static inline int __energy_diff(struct energy_env *eenv)
+static inline int energy_diff(struct energy_env *eenv)
 {
 	struct sched_domain *sd;
 	struct sched_group *sg;
-	int sd_cpu = -1, energy_before = 0, energy_after = 0;
-	int diff, margin;
+	int energy_diff = 0;
+	int sd_cpu = -1;
+	int margin;
 
 	struct energy_env eenv_before = {
 		.util_delta	= task_util(eenv->p),
 		.src_cpu	= eenv->src_cpu,
 		.dst_cpu	= eenv->dst_cpu,
 		.trg_cpu	= eenv->src_cpu,
-		.nrg		= { 0, 0, 0, 0},
-		.cap		= { 0, 0, 0 },
-		.p  		= eenv->p,
+		.energy		= 0,
+		.p              = eenv->p,
 	};
 
 	if (eenv->src_cpu == eenv->dst_cpu)
@@ -5713,30 +5685,22 @@ static inline int __energy_diff(struct energy_env *eenv)
 	do {
 		if (cpu_in_sg(sg, eenv->src_cpu) || cpu_in_sg(sg, eenv->dst_cpu)) {
 			eenv_before.sg_top = eenv->sg_top = sg;
-
 			if (sched_group_energy(&eenv_before))
 				return 0; /* Invalid result abort */
-			energy_before += eenv_before.energy;
-
-			/* Keep track of SRC cpu (before) capacity */
-			eenv->cap.before = eenv_before.cap.before;
-			eenv->cap.delta = eenv_before.cap.delta;
-
 			if (sched_group_energy(eenv))
 				return 0; /* Invalid result abort */
-			energy_after += eenv->energy;
 		}
 	} while (sg = sg->next, sg != sd->groups);
-
-	eenv->nrg.before = energy_before;
-	eenv->nrg.after = energy_after;
-	eenv->nrg.diff = eenv->nrg.after - eenv->nrg.before;
-	eenv->payoff = 0;
+	energy_diff = eenv->energy - eenv_before.energy;
 
 	/*
 	 * Dead-zone margin preventing too many migrations.
 	 */
+	margin = eenv->energy >> 6; /* ~1.56% */
+	if (abs(energy_diff) < margin)
+		energy_diff = 0;
 
+<<<<<<< HEAD
 	margin = eenv->nrg.before >> 6; /* ~1.56% */
 
 	diff = eenv->nrg.after - eenv->nrg.before;
@@ -5826,10 +5790,10 @@ energy_diff(struct energy_env *eenv)
 	 * a scheduling decision
 	 */
 	return -eenv->payoff;
+=======
+	return energy_diff;
+>>>>>>> 1eea7bb38561 (sched/fair: remove capacity tracking from energy_diff)
 }
-#else /* CONFIG_SCHED_TUNE */
-#define energy_diff(eenv) __energy_diff(eenv)
-#endif
 
 /*
  * Detect M:N waker/wakee relationships via a switching-frequency heuristic.
