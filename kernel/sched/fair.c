@@ -2922,12 +2922,16 @@ __update_load_avg_se(u64 now, int cpu, struct cfs_rq *cfs_rq, struct sched_entit
 {
 	if (___update_load_avg(now, cpu, &se->avg,
 				  se->on_rq * scale_load_down(se->load.weight),
+<<<<<<< HEAD
 				  cfs_rq->curr == se, NULL, NULL)) {
 		cfs_se_util_change(&se->avg);
 		return 1;
 	}
 
 	return 0;
+=======
+				  cfs_rq->curr == se, NULL, NULL);
+>>>>>>> c98cf65fb708 (FROMLIST: sched/rt: add utilization tracking)
 }
 
 static int
@@ -3275,7 +3279,11 @@ int update_rt_rq_load_avg(u64 now, int cpu, struct rt_rq *rt_rq, int running)
 {
 	int ret;
 
+<<<<<<< HEAD
 	ret = ___update_load_avg(now, cpu, &rt_rq->avg, running, running, NULL, rt_rq);
+=======
+	ret = ___update_load_avg(now, cpu, &rt_rq->avg, 0, running, NULL, rt_rq);
+>>>>>>> c98cf65fb708 (FROMLIST: sched/rt: add utilization tracking)
 
 	return ret;
 }
