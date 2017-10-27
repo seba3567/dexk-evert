@@ -19,6 +19,7 @@ ifeq ($(CONFIG_RELOCATABLE), y)
 # Pass --no-apply-dynamic-relocs to restore pre-binutils-2.27 behaviour
 # for relative relocs, since this leads to better Image compression
 # with the relocation offsets always being zero.
+<<<<<<< HEAD
 LDFLAGS_vmlinux		+= -Bsymbolic -z notext -z norelro \
 			$(call ld-option, --no-apply-dynamic-relocs)
 
@@ -29,6 +30,10 @@ endif
 ifeq ($(ld-name),lld)
 LDFLAGS_vmlinux		+= -pie
 endif
+=======
+LDFLAGS_vmlinux		+= -pie -shared -Bsymbolic \
+			$(call ld-option, --no-apply-dynamic-relocs)
+>>>>>>> a07819e0ac45 (arm64: prevent regressions in compressed kernel image size when upgrading to binutils 2.27)
 endif
 
 KBUILD_DEFCONFIG := defconfig
