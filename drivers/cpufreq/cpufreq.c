@@ -372,85 +372,24 @@ static void adjust_jiffies(unsigned long val, struct cpufreq_freqs *ci)
  *********************************************************************/
 
 static DEFINE_PER_CPU(unsigned long, freq_scale) = SCHED_CAPACITY_SCALE;
-static DEFINE_PER_CPU(unsigned long, max_freq_cpu);
-static DEFINE_PER_CPU(unsigned long, max_freq_scale) = SCHED_CAPACITY_SCALE;
-static DEFINE_PER_CPU(unsigned long, min_freq_scale);
 
 static void
-scale_freq_capacity(const cpumask_t *cpus, unsigned long cur_freq,
-		    unsigned long max_freq)
+scale_freq_capacity(struct cpufreq_policy *policy, struct cpufreq_freqs *freqs)
 {
-	unsigned long scale = (cur_freq << SCHED_CAPACITY_SHIFT) / max_freq;
+	unsigned long cur = freqs ? freqs->new : policy->cur;
+	unsigned long scale = (cur << SCHED_CAPACITY_SHIFT) / policy->max;
 	int cpu;
 
-	for_each_cpu(cpu, cpus) {
-		per_cpu(freq_scale, cpu) = scale;
-		per_cpu(max_freq_cpu, cpu) = max_freq;
-	}
+	pr_debug("cpus %*pbl cur/cur max freq %lu/%u kHz freq scale %lu\n",
+		 cpumask_pr_args(policy->cpus), cur, policy->max, scale);
 
-	pr_debug("cpus %*pbl cur freq/max freq %lu/%lu kHz freq scale %lu\n",
-		 cpumask_pr_args(cpus), cur_freq, max_freq, scale);
+	for_each_cpu(cpu, policy->cpus)
+		per_cpu(freq_scale, cpu) = scale;
 }
 
 unsigned long cpufreq_scale_freq_capacity(struct sched_domain *sd, int cpu)
 {
 	return per_cpu(freq_scale, cpu);
-}
-
-static void
-scale_max_freq_capacity(const cpumask_t *cpus, unsigned long policy_max_freq)
-{
-	unsigned long scale, max_freq;
-	int cpu = cpumask_first(cpus);
-
-	if (cpu >= nr_cpu_ids)
-		return;
-
-	max_freq = per_cpu(max_freq_cpu, cpu);
-
-	if (!max_freq)
-		return;
-
-	scale = (policy_max_freq << SCHED_CAPACITY_SHIFT) / max_freq;
-
-	for_each_cpu(cpu, cpus)
-		per_cpu(max_freq_scale, cpu) = scale;
-
-	pr_debug("cpus %*pbl policy max freq/max freq %lu/%lu kHz max freq scale %lu\n",
-		 cpumask_pr_args(cpus), policy_max_freq, max_freq, scale);
-}
-
-unsigned long cpufreq_scale_max_freq_capacity(struct sched_domain *sd, int cpu)
-{
-	return per_cpu(max_freq_scale, cpu);
-}
-
-static void
-scale_min_freq_capacity(const cpumask_t *cpus, unsigned long policy_min_freq)
-{
-	unsigned long scale, max_freq;
-	int cpu = cpumask_first(cpus);
-
-	if (cpu >= nr_cpu_ids)
-		return;
-
-	max_freq = per_cpu(max_freq_cpu, cpu);
-
-	if (!max_freq)
-		return;
-
-	scale = (policy_min_freq << SCHED_CAPACITY_SHIFT) / max_freq;
-
-	for_each_cpu(cpu, cpus)
-		per_cpu(min_freq_scale, cpu) = scale;
-
-	pr_debug("cpus %*pbl policy min freq/max freq %lu/%lu kHz min freq scale %lu\n",
-		 cpumask_pr_args(cpus), policy_min_freq, max_freq, scale);
-}
-
-unsigned long cpufreq_scale_min_freq_capacity(struct sched_domain *sd, int cpu)
-{
-	return per_cpu(min_freq_scale, cpu);
 }
 
 static void __cpufreq_notify_transition(struct cpufreq_policy *policy,
@@ -489,7 +428,7 @@ static void __cpufreq_notify_transition(struct cpufreq_policy *policy,
 		adjust_jiffies(CPUFREQ_POSTCHANGE, freqs);
 		pr_debug("FREQ: %lu - CPU: %lu\n",
 			 (unsigned long)freqs->new, (unsigned long)freqs->cpu);
-//		trace_cpu_frequency(freqs->new, freqs->cpu);
+		trace_cpu_frequency(freqs->new, freqs->cpu);
 		cpufreq_times_record_transition(freqs);
 		srcu_notifier_call_chain(&cpufreq_transition_notifier_list,
 				CPUFREQ_POSTCHANGE, freqs);
@@ -531,7 +470,7 @@ void cpufreq_freq_transition_begin(struct cpufreq_policy *policy,
 		struct cpufreq_freqs *freqs)
 {
 #ifdef CONFIG_SMP
-//	int cpu;
+	int cpu;
 #endif
 
 	/*
@@ -560,10 +499,10 @@ wait:
 
 	spin_unlock(&policy->transition_lock);
 
-	scale_freq_capacity(policy->cpus, freqs->new, policy->cpuinfo.max_freq);
+	scale_freq_capacity(policy, freqs);
 #ifdef CONFIG_SMP
-//	for_each_cpu(cpu, policy->cpus)
-//		trace_cpu_capacity(capacity_curr_of(cpu), cpu);
+	for_each_cpu(cpu, policy->cpus)
+		trace_cpu_capacity(capacity_curr_of(cpu), cpu);
 #endif
 
 	cpufreq_notify_transition(policy, freqs, CPUFREQ_PRECHANGE);
@@ -805,13 +744,7 @@ static ssize_t show_cpuinfo_cur_freq(struct cpufreq_policy *policy,
  */
 static ssize_t show_scaling_governor(struct cpufreq_policy *policy, char *buf)
 {
-<<<<<<< HEAD
 	if (policy->policy == CPUFREQ_POLICY_POWERSAVE)
-=======
-	if (task_is_booster(current))
-		return sprintf(buf, "schedutil\n");
-	else if (policy->policy == CPUFREQ_POLICY_POWERSAVE)
->>>>>>> b0b2c0a14ac7 (cpufreq : correct missing task_is_booster definitions)
 		return sprintf(buf, "powersave\n");
 	else if (policy->policy == CPUFREQ_POLICY_PERFORMANCE)
 		return sprintf(buf, "performance\n");
@@ -2092,15 +2025,6 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 	}
 
 out:
-	/*
-	 * This might look like a redundant call as we are checking it again
-	 * after finding index. But it is left intentionally for cases where
-	 * exactly same freq is called again and so we can save on few function
-	 * calls.
-	 */
-	if (target_freq == policy->cur)
-		retval = 0;
-
 	return retval;
 }
 EXPORT_SYMBOL_GPL(__cpufreq_driver_target);
@@ -2327,12 +2251,11 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
 			CPUFREQ_NOTIFY, new_policy);
 
-	scale_max_freq_capacity(policy->cpus, policy->max);
-	scale_min_freq_capacity(policy->cpus, policy->min);
+	scale_freq_capacity(new_policy, NULL);
 
 	policy->min = new_policy->min;
 	policy->max = new_policy->max;
-//	trace_cpu_frequency_limits(policy->max, policy->min, policy->cpu);
+	trace_cpu_frequency_limits(policy->max, policy->min, policy->cpu);
 
 	pr_debug("new min and max freqs are %u - %u kHz\n",
 		 policy->min, policy->max);
@@ -2590,17 +2513,6 @@ int cpufreq_boost_enabled(void)
 	return cpufreq_driver->boost_enabled;
 }
 EXPORT_SYMBOL_GPL(cpufreq_boost_enabled);
-
-/*********************************************************************
- *               FREQUENCY INVARIANT ACCOUNTING SUPPORT              *
- *********************************************************************/
-
-__weak void arch_set_freq_scale(struct cpumask *cpus,
-				unsigned long cur_freq,
-				unsigned long max_freq)
-{
-}
-EXPORT_SYMBOL_GPL(arch_set_freq_scale);
 
 /*********************************************************************
  *               REGISTER / UNREGISTER CPUFREQ DRIVER                *
