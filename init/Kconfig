@@ -1356,6 +1356,7 @@ config SCHED_TUNE
 
 	  If unsure, say N.
 
+<<<<<<< HEAD
 config CPUSET_ASSIST
 	bool "CPUSet configuration helper"
 	depends on CPUSETS
@@ -1364,6 +1365,8 @@ config CPUSET_ASSIST
 	  This option enables the configuration of default cpusets
 	  parameters from kernel.
 
+=======
+>>>>>>> 16fff278ab63... sched/tune: Add initial support for Dynamic SchedTune Boost
 config DYNAMIC_STUNE_BOOST
 	bool "Dynamic SchedTune boosting support"
 	depends on SCHED_TUNE
