@@ -603,6 +603,7 @@ struct mdss_dsi_ctrl_pdata {
 
 	bool phy_power_off;
 
+	struct pm_qos_request pm_qos_req;
 	struct notifier_block wake_notif;
 	struct task_struct *wake_thread;
 	struct completion wake_comp;
