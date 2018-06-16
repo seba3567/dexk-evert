@@ -2781,6 +2781,7 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
 		      bool impedance_det_en)
 {
 	int ret = 0;
+	impedance_det_en = true;
 	int hph_swh = 0;
 	int gnd_swh = 0;
 	u32 hph_moist_config[3];
