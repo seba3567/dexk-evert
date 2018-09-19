@@ -174,7 +174,11 @@ gss_wrap_kerberos_v1(struct krb5_ctx *kctx, int offset,
 
 	now = get_seconds();
 
+<<<<<<< HEAD
 	blocksize = crypto_blkcipher_blocksize(kctx->enc);
+=======
+	blocksize = crypto_sync_skcipher_blocksize(kctx->enc);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	gss_krb5_add_padding(buf, offset, blocksize);
 	BUG_ON((buf->len - offset) % blocksize);
 	plainlen = conflen + buf->len - offset;
@@ -239,10 +243,17 @@ gss_wrap_kerberos_v1(struct krb5_ctx *kctx, int offset,
 		return GSS_S_FAILURE;
 
 	if (kctx->enctype == ENCTYPE_ARCFOUR_HMAC) {
+<<<<<<< HEAD
 		struct crypto_blkcipher *cipher;
 		int err;
 		cipher = crypto_alloc_blkcipher(kctx->gk5e->encrypt_name, 0,
 						CRYPTO_ALG_ASYNC);
+=======
+		struct crypto_sync_skcipher *cipher;
+		int err;
+		cipher = crypto_alloc_sync_skcipher(kctx->gk5e->encrypt_name,
+						    0, 0);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		if (IS_ERR(cipher))
 			return GSS_S_FAILURE;
 
@@ -250,7 +261,11 @@ gss_wrap_kerberos_v1(struct krb5_ctx *kctx, int offset,
 
 		err = gss_encrypt_xdr_buf(cipher, buf,
 					  offset + headlen - conflen, pages);
+<<<<<<< HEAD
 		crypto_free_blkcipher(cipher);
+=======
+		crypto_free_sync_skcipher(cipher);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		if (err)
 			return GSS_S_FAILURE;
 	} else {
@@ -327,18 +342,30 @@ gss_unwrap_kerberos_v1(struct krb5_ctx *kctx, int offset, struct xdr_buf *buf)
 		return GSS_S_BAD_SIG;
 
 	if (kctx->enctype == ENCTYPE_ARCFOUR_HMAC) {
+<<<<<<< HEAD
 		struct crypto_blkcipher *cipher;
 		int err;
 
 		cipher = crypto_alloc_blkcipher(kctx->gk5e->encrypt_name, 0,
 						CRYPTO_ALG_ASYNC);
+=======
+		struct crypto_sync_skcipher *cipher;
+		int err;
+
+		cipher = crypto_alloc_sync_skcipher(kctx->gk5e->encrypt_name,
+						    0, 0);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		if (IS_ERR(cipher))
 			return GSS_S_FAILURE;
 
 		krb5_rc4_setup_enc_key(kctx, cipher, seqnum);
 
 		err = gss_decrypt_xdr_buf(cipher, buf, crypt_offset);
+<<<<<<< HEAD
 		crypto_free_blkcipher(cipher);
+=======
+		crypto_free_sync_skcipher(cipher);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		if (err)
 			return GSS_S_DEFECTIVE_TOKEN;
 	} else {
@@ -371,7 +398,11 @@ gss_unwrap_kerberos_v1(struct krb5_ctx *kctx, int offset, struct xdr_buf *buf)
 	/* Copy the data back to the right position.  XXX: Would probably be
 	 * better to copy and encrypt at the same time. */
 
+<<<<<<< HEAD
 	blocksize = crypto_blkcipher_blocksize(kctx->enc);
+=======
+	blocksize = crypto_sync_skcipher_blocksize(kctx->enc);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	data_start = ptr + (GSS_KRB5_TOK_HDR_LEN + kctx->gk5e->cksumlength) +
 					conflen;
 	orig_start = buf->head[0].iov_base + offset;

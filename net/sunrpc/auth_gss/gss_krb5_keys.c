@@ -147,7 +147,11 @@ u32 krb5_derive_key(const struct gss_krb5_enctype *gk5e,
 	size_t blocksize, keybytes, keylength, n;
 	unsigned char *inblockdata, *outblockdata, *rawkey;
 	struct xdr_netobj inblock, outblock;
+<<<<<<< HEAD
 	struct crypto_blkcipher *cipher;
+=======
+	struct crypto_sync_skcipher *cipher;
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	u32 ret = EINVAL;
 
 	blocksize = gk5e->blocksize;
@@ -157,11 +161,18 @@ u32 krb5_derive_key(const struct gss_krb5_enctype *gk5e,
 	if ((inkey->len != keylength) || (outkey->len != keylength))
 		goto err_return;
 
+<<<<<<< HEAD
 	cipher = crypto_alloc_blkcipher(gk5e->encrypt_name, 0,
 					CRYPTO_ALG_ASYNC);
 	if (IS_ERR(cipher))
 		goto err_return;
 	if (crypto_blkcipher_setkey(cipher, inkey->data, inkey->len))
+=======
+	cipher = crypto_alloc_sync_skcipher(gk5e->encrypt_name, 0, 0);
+	if (IS_ERR(cipher))
+		goto err_return;
+	if (crypto_sync_skcipher_setkey(cipher, inkey->data, inkey->len))
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		goto err_return;
 
 	/* allocate and set up buffers */
@@ -238,7 +249,11 @@ err_free_in:
 	memset(inblockdata, 0, blocksize);
 	kfree(inblockdata);
 err_free_cipher:
+<<<<<<< HEAD
 	crypto_free_blkcipher(cipher);
+=======
+	crypto_free_sync_skcipher(cipher);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 err_return:
 	return ret;
 }

@@ -217,7 +217,11 @@ simple_get_netobj(const void *p, const void *end, struct xdr_netobj *res)
 
 static inline const void *
 get_key(const void *p, const void *end,
+<<<<<<< HEAD
 	struct krb5_ctx *ctx, struct crypto_blkcipher **res)
+=======
+	struct krb5_ctx *ctx, struct crypto_sync_skcipher **res)
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 {
 	struct xdr_netobj	key;
 	int			alg;
@@ -245,15 +249,23 @@ get_key(const void *p, const void *end,
 	if (IS_ERR(p))
 		goto out_err;
 
+<<<<<<< HEAD
 	*res = crypto_alloc_blkcipher(ctx->gk5e->encrypt_name, 0,
 							CRYPTO_ALG_ASYNC);
+=======
+	*res = crypto_alloc_sync_skcipher(ctx->gk5e->encrypt_name, 0, 0);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	if (IS_ERR(*res)) {
 		printk(KERN_WARNING "gss_kerberos_mech: unable to initialize "
 			"crypto algorithm %s\n", ctx->gk5e->encrypt_name);
 		*res = NULL;
 		goto out_err_free_key;
 	}
+<<<<<<< HEAD
 	if (crypto_blkcipher_setkey(*res, key.data, key.len)) {
+=======
+	if (crypto_sync_skcipher_setkey(*res, key.data, key.len)) {
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		printk(KERN_WARNING "gss_kerberos_mech: error setting key for "
 			"crypto algorithm %s\n", ctx->gk5e->encrypt_name);
 		goto out_err_free_tfm;
@@ -263,7 +275,11 @@ get_key(const void *p, const void *end,
 	return p;
 
 out_err_free_tfm:
+<<<<<<< HEAD
 	crypto_free_blkcipher(*res);
+=======
+	crypto_free_sync_skcipher(*res);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 out_err_free_key:
 	kfree(key.data);
 	p = ERR_PTR(-EINVAL);
@@ -335,30 +351,52 @@ gss_import_v1_context(const void *p, const void *end, struct krb5_ctx *ctx)
 	return 0;
 
 out_err_free_key2:
+<<<<<<< HEAD
 	crypto_free_blkcipher(ctx->seq);
 out_err_free_key1:
 	crypto_free_blkcipher(ctx->enc);
+=======
+	crypto_free_sync_skcipher(ctx->seq);
+out_err_free_key1:
+	crypto_free_sync_skcipher(ctx->enc);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 out_err_free_mech:
 	kfree(ctx->mech_used.data);
 out_err:
 	return PTR_ERR(p);
 }
 
+<<<<<<< HEAD
 static struct crypto_blkcipher *
 context_v2_alloc_cipher(struct krb5_ctx *ctx, const char *cname, u8 *key)
 {
 	struct crypto_blkcipher *cp;
 
 	cp = crypto_alloc_blkcipher(cname, 0, CRYPTO_ALG_ASYNC);
+=======
+static struct crypto_sync_skcipher *
+context_v2_alloc_cipher(struct krb5_ctx *ctx, const char *cname, u8 *key)
+{
+	struct crypto_sync_skcipher *cp;
+
+	cp = crypto_alloc_sync_skcipher(cname, 0, 0);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	if (IS_ERR(cp)) {
 		dprintk("gss_kerberos_mech: unable to initialize "
 			"crypto algorithm %s\n", cname);
 		return NULL;
 	}
+<<<<<<< HEAD
 	if (crypto_blkcipher_setkey(cp, key, ctx->gk5e->keylength)) {
 		dprintk("gss_kerberos_mech: error setting key for "
 			"crypto algorithm %s\n", cname);
 		crypto_free_blkcipher(cp);
+=======
+	if (crypto_sync_skcipher_setkey(cp, key, ctx->gk5e->keylength)) {
+		dprintk("gss_kerberos_mech: error setting key for "
+			"crypto algorithm %s\n", cname);
+		crypto_free_sync_skcipher(cp);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		return NULL;
 	}
 	return cp;
@@ -412,9 +450,15 @@ context_derive_keys_des3(struct krb5_ctx *ctx, gfp_t gfp_mask)
 	return 0;
 
 out_free_enc:
+<<<<<<< HEAD
 	crypto_free_blkcipher(ctx->enc);
 out_free_seq:
 	crypto_free_blkcipher(ctx->seq);
+=======
+	crypto_free_sync_skcipher(ctx->enc);
+out_free_seq:
+	crypto_free_sync_skcipher(ctx->seq);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 out_err:
 	return -EINVAL;
 }
@@ -466,17 +510,27 @@ context_derive_keys_rc4(struct krb5_ctx *ctx)
 	/*
 	 * allocate hash, and blkciphers for data and seqnum encryption
 	 */
+<<<<<<< HEAD
 	ctx->enc = crypto_alloc_blkcipher(ctx->gk5e->encrypt_name, 0,
 					  CRYPTO_ALG_ASYNC);
+=======
+	ctx->enc = crypto_alloc_sync_skcipher(ctx->gk5e->encrypt_name, 0, 0);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	if (IS_ERR(ctx->enc)) {
 		err = PTR_ERR(ctx->enc);
 		goto out_err_free_hmac;
 	}
 
+<<<<<<< HEAD
 	ctx->seq = crypto_alloc_blkcipher(ctx->gk5e->encrypt_name, 0,
 					  CRYPTO_ALG_ASYNC);
 	if (IS_ERR(ctx->seq)) {
 		crypto_free_blkcipher(ctx->enc);
+=======
+	ctx->seq = crypto_alloc_sync_skcipher(ctx->gk5e->encrypt_name, 0, 0);
+	if (IS_ERR(ctx->seq)) {
+		crypto_free_sync_skcipher(ctx->enc);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		err = PTR_ERR(ctx->seq);
 		goto out_err_free_hmac;
 	}
@@ -588,7 +642,11 @@ context_derive_keys_new(struct krb5_ctx *ctx, gfp_t gfp_mask)
 			context_v2_alloc_cipher(ctx, "cbc(aes)",
 						ctx->acceptor_seal);
 		if (ctx->acceptor_enc_aux == NULL) {
+<<<<<<< HEAD
 			crypto_free_blkcipher(ctx->initiator_enc_aux);
+=======
+			crypto_free_sync_skcipher(ctx->initiator_enc_aux);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 			goto out_free_acceptor_enc;
 		}
 	}
@@ -596,9 +654,15 @@ context_derive_keys_new(struct krb5_ctx *ctx, gfp_t gfp_mask)
 	return 0;
 
 out_free_acceptor_enc:
+<<<<<<< HEAD
 	crypto_free_blkcipher(ctx->acceptor_enc);
 out_free_initiator_enc:
 	crypto_free_blkcipher(ctx->initiator_enc);
+=======
+	crypto_free_sync_skcipher(ctx->acceptor_enc);
+out_free_initiator_enc:
+	crypto_free_sync_skcipher(ctx->initiator_enc);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 out_err:
 	return -EINVAL;
 }
@@ -710,12 +774,21 @@ static void
 gss_delete_sec_context_kerberos(void *internal_ctx) {
 	struct krb5_ctx *kctx = internal_ctx;
 
+<<<<<<< HEAD
 	crypto_free_blkcipher(kctx->seq);
 	crypto_free_blkcipher(kctx->enc);
 	crypto_free_blkcipher(kctx->acceptor_enc);
 	crypto_free_blkcipher(kctx->initiator_enc);
 	crypto_free_blkcipher(kctx->acceptor_enc_aux);
 	crypto_free_blkcipher(kctx->initiator_enc_aux);
+=======
+	crypto_free_sync_skcipher(kctx->seq);
+	crypto_free_sync_skcipher(kctx->enc);
+	crypto_free_sync_skcipher(kctx->acceptor_enc);
+	crypto_free_sync_skcipher(kctx->initiator_enc);
+	crypto_free_sync_skcipher(kctx->acceptor_enc_aux);
+	crypto_free_sync_skcipher(kctx->initiator_enc_aux);
+>>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	kfree(kctx->mech_used.data);
 	kfree(kctx);
 }
