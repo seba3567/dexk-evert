@@ -39,8 +39,12 @@ CONFIG_MEMCG=y
 CONFIG_MEMCG_SWAP=y
 CONFIG_CGROUP_SCHED=y
 CONFIG_RT_GROUP_SCHED=y
+<<<<<<< HEAD:arch/arm64/configs/payton_defconfig
 CONFIG_SCHED_HMP=y
 CONFIG_SCHED_HMP_CSTATE_AWARE=y
+=======
+CONFIG_BLK_CGROUP=y
+>>>>>>> 0464a8ac186f (defconfig: Remove HMP and core_ctl):arch/arm64/configs/dxt_defconfig
 CONFIG_NAMESPACES=y
 # CONFIG_UTS_NS is not set
 # CONFIG_PID_NS is not set
