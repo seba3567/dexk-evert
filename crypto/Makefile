@@ -136,6 +136,11 @@ obj-$(CONFIG_ASYMMETRIC_KEY_TYPE) += asymmetric_keys/
 obj-$(CONFIG_CRYPTO_HASH_INFO) += hash_info.o
 obj-$(CONFIG_CRYPTO_ABLK_HELPER) += ablk_helper.o
 
+<<<<<<< HEAD
 ccflags-y := -O3
 ccflags-y += $(call cc-option, -g0)
 ccflags-y += $(call cc-option, -Os)
+=======
+# Squeeze a little bit more juice from GCC
+ccflags-y := -O3
+>>>>>>> 666315ceaf8c... arm:crypto: boost performance/-o3
