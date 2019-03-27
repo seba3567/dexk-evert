@@ -3278,6 +3278,11 @@ retry:
 		if (contended_compaction == COMPACT_CONTENDED_SCHED
 			&& !(current->flags & PF_KTHREAD))
 			goto nopage;
+
+	/* Boost when memory is low so allocation latency doesn't get too bad */
+	cpu_input_boost_kick_max(100);
+	devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 100);
+
 	}
 
 	/* Boost when memory is low so allocation latency doesn't get too bad */
