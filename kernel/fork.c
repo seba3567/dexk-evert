@@ -85,6 +85,8 @@
 #include <linux/simple_lmk.h>
 #include <linux/devfreq_boost.h>
 #include <linux/boost_control.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -1805,10 +1807,19 @@ long _do_fork(unsigned long clone_flags,
 	int trace = 0;
 	long nr;
 
+<<<<<<< HEAD
 	if (app_launch_boost_ms && task_is_zygote(current)) {
 		cpu_input_boost_kick_max(app_launch_boost_ms);
 		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, app_launch_boost_ms);
     }
+=======
+	/* Boost CPU to the max for 50 ms when userspace launches an app */
+	if (task_is_zygote(current)) {
+		cpu_input_boost_kick_max(50);
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 50);
+	}
+
+>>>>>>> 0ea266ab87a0... kernel: Boost to the max for a short amount of time when zygote forks
 	/*
 	 * Determine whether and which event to report to ptracer.  When
 	 * called from kernel_thread or CLONE_UNTRACED is explicitly
