@@ -365,7 +365,12 @@ static int cpufreq_governor_init(struct cpufreq_policy *policy,
 
 	return 0;
 
+<<<<<<< HEAD
 reset_gdbs_data:
+=======
+	kobject_put(&dbs_data->attr_set.kobj);
+
+>>>>>>> 7fd2d2adc905... cpufreq: Fix kobject memleak
 	policy->governor_data = NULL;
 
 	if (!have_governor_per_policy())
