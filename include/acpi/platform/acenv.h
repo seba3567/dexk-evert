@@ -170,6 +170,7 @@
  *
  *****************************************************************************/
 
+<<<<<<< HEAD
 #if defined(__GNUC__) && !defined(__INTEL_COMPILER)
 #include <acpi/platform/acgcc.h>
 
@@ -181,6 +182,8 @@
 
 #endif
 
+=======
+>>>>>>> a62ea0dcb1d2 (ACPICA: Fix failed target detection with bare-metal compiler)
 #if defined(_LINUX) || defined(__linux__) || defined(__KERNEL__)
 #include <acpi/platform/aclinux.h>
 
