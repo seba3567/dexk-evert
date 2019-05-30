@@ -3588,8 +3588,24 @@ void cpufreq_add_update_util_hook(int cpu, struct update_util_data *data,
                        void (*func)(struct update_util_data *data, u64 time,
                                     unsigned int flags));
 void cpufreq_remove_update_util_hook(int cpu);
+<<<<<<< HEAD
 static inline unsigned long map_util_freq(unsigned long util,
 					unsigned long freq, unsigned long cap)
+=======
+#endif /* CONFIG_CPU_FREQ */
+
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
+int do_stune_boost(int boost, int *slot);
+int do_stune_sched_boost(int *slot);
+int reset_stune_boost(int slot);
+int get_sched_boost(void);
+int do_prefer_idle(u64 prefer_idle);
+#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
+
+#ifndef arch_scale_cpu_capacity
+static __always_inline
+unsigned long arch_scale_cpu_capacity(struct sched_domain *sd, int cpu)
+>>>>>>> a9be776912e9 (sched/tune: Add support for dynamic prefer_idle)
 {
 	return (freq + (freq >> 2)) * util / cap;
 }
