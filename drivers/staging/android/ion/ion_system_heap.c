@@ -354,6 +354,13 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 	struct device *dev = heap->priv;
 	struct page_info info_onstack[SZ_4K / sizeof(struct page_info)];
 
+	if (ion_heap_is_system_heap_type(buffer->heap->type) &&
+	    is_secure_vmid_valid(vmid)) {
+		pr_info("%s: System heap doesn't support secure allocations\n",
+			__func__);
+		return -EINVAL;
+	}
+
 	if (align > PAGE_SIZE)
 		return -EINVAL;
 
@@ -441,8 +448,12 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 				i = process_info(info, sg, sg_sync, &data, i);
 				free_info(info, info_onstack,
 					  ARRAY_SIZE(info_onstack));
+<<<<<<< HEAD
 				if (sg_sync)
 					sg_sync = sg_next(sg_sync);
+=======
+				sg_sync = sg_next(sg_sync);
+>>>>>>> 2b070cefcb5f... ion: system_heap: Speed up system heap allocations
 			} else {
 				i = process_info(tmp_info, sg, 0, 0, i);
 				free_info(tmp_info, info_onstack,
@@ -451,8 +462,12 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 		} else if (info) {
 			i = process_info(info, sg, sg_sync, &data, i);
 			free_info(info, info_onstack, ARRAY_SIZE(info_onstack));
+<<<<<<< HEAD
 			if (sg_sync)
 				sg_sync = sg_next(sg_sync);
+=======
+			sg_sync = sg_next(sg_sync);
+>>>>>>> 2b070cefcb5f... ion: system_heap: Speed up system heap allocations
 		} else if (tmp_info) {
 			i = process_info(tmp_info, sg, 0, 0, i);
 			free_info(tmp_info, info_onstack,
