@@ -1238,6 +1238,7 @@
 		qcom,governor-per-policy;
 
 		qcom,cpufreq-table-0 =
+      <  300000 >,
 			<  787200 >,
 			< 1113600 >,
 			< 1344000 >,
@@ -1251,6 +1252,7 @@
 			< 2515200 >;
 
 		qcom,cpufreq-table-4 =
+      <  300000 >,
 			<  614400 >,
 			<  883200 >,
 			< 1094400 >,
@@ -1526,6 +1528,7 @@
 		qcom,irq-mask = <0x200>;
 		interrupts = <0 157 1>;
 		label = "lpass";
+    cpu-affinity = <1 2>;
 		qcom,qos-config = <&glink_qos_adsp>;
 		qcom,ramp-time = <0xaf>;
 	};
