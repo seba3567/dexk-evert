@@ -449,11 +449,16 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 				free_info(info, info_onstack,
 					  ARRAY_SIZE(info_onstack));
 <<<<<<< HEAD
+<<<<<<< HEAD
 				if (sg_sync)
 					sg_sync = sg_next(sg_sync);
 =======
 				sg_sync = sg_next(sg_sync);
 >>>>>>> 2b070cefcb5f... ion: system_heap: Speed up system heap allocations
+=======
+				if (sg_sync)
+					sg_sync = sg_next(sg_sync);
+>>>>>>> c9f005e8b6c0... ion: system_heap: Fix uninitialized sg-table usage
 			} else {
 				i = process_info(tmp_info, sg, 0, 0, i);
 				free_info(tmp_info, info_onstack,
@@ -463,11 +468,16 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 			i = process_info(info, sg, sg_sync, &data, i);
 			free_info(info, info_onstack, ARRAY_SIZE(info_onstack));
 <<<<<<< HEAD
+<<<<<<< HEAD
 			if (sg_sync)
 				sg_sync = sg_next(sg_sync);
 =======
 			sg_sync = sg_next(sg_sync);
 >>>>>>> 2b070cefcb5f... ion: system_heap: Speed up system heap allocations
+=======
+			if (sg_sync)
+				sg_sync = sg_next(sg_sync);
+>>>>>>> c9f005e8b6c0... ion: system_heap: Fix uninitialized sg-table usage
 		} else if (tmp_info) {
 			i = process_info(tmp_info, sg, 0, 0, i);
 			free_info(tmp_info, info_onstack,
