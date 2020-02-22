@@ -34,10 +34,10 @@
 #include <asm/cacheflush.h>
 #endif
 #include <linux/device.h>
-#include <linux/msm_dma_iommu_mapping.h>
 
 #include "ion.h"
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 struct ion_handle {
 	struct ion_buffer *buffer;
@@ -109,6 +109,14 @@ struct ion_buffer {
 	pid_t pid;
 	struct msm_iommu_data iommu_data;
 >>>>>>> 7601be493260... iommu: msm: Rewrite to improve clarity and performance
+=======
+struct ion_handle {
+	struct ion_buffer *buffer;
+	struct ion_client *client;
+	struct rb_node rnode;
+	atomic_t refcount;
+	int id;
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 };
 
 /**

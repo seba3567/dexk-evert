@@ -22,9 +22,15 @@ struct ion_device {
 struct ion_client {
 	struct ion_device *idev;
 	struct idr handle_idr;
+<<<<<<< HEAD
 	struct latch_tree_root handle_root;
 	spinlock_t idr_lock;
 	spinlock_t rb_lock;
+=======
+	struct rb_root handle_root;
+	rwlock_t idr_lock;
+	rwlock_t rb_lock;
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 };
 
 static void ion_buffer_free_work(struct work_struct *work)
@@ -51,23 +57,37 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap, size_t len,
 	if (!buffer)
 		return ERR_PTR(-ENOMEM);
 
-	INIT_LIST_HEAD(&buffer->iommu_data.map_list);
-	mutex_init(&buffer->iommu_data.lock);
-	buffer->heap = heap;
-	buffer->flags = flags;
-	kref_init(&buffer->ref);
-
-	ret = heap->ops->allocate(heap, buffer, len, align, flags);
+	*buffer = (typeof(*buffer)){
+		.flags = flags,
+		.heap = heap,
+		.size = len,
+		.refcount = ATOMIC_INIT(1),
+		.kmap_lock = __MUTEX_INITIALIZER(buffer->kmap_lock),
+		.free = __WORK_INITIALIZER(buffer->free, ion_buffer_free_work),
+		.iommu_data = {
+			.map_list = LIST_HEAD_INIT(buffer->iommu_data.map_list),
+			.lock = __MUTEX_INITIALIZER(buffer->iommu_data.lock)
+		}
+	};
 
 	if (heap->ops->allocate(heap, buffer, len, align, flags)) {
 		if (!(heap->flags & ION_HEAP_FLAG_DEFER_FREE))
 			goto free_buffer;
+<<<<<<< HEAD
 
 		drain_workqueue(heap->wq);
 		if (heap->ops->allocate(heap, buffer, len, align, flags))
 			goto free_buffer;
 	}
 
+=======
+
+		drain_workqueue(heap->wq);
+		if (heap->ops->allocate(heap, buffer, len, align, flags))
+			goto free_buffer;
+	}
+
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 	buffer->sg_table = heap->ops->map_dma(heap, buffer);
 	if (IS_ERR_OR_NULL(buffer->sg_table))
 		goto free_heap;
@@ -89,6 +109,7 @@ free_buffer:
 void ion_buffer_put(struct ion_buffer *buffer)
 {
 	struct ion_heap *heap = buffer->heap;
+<<<<<<< HEAD
 
 	struct ion_device *dev = buffer->dev;
 
@@ -103,6 +124,8 @@ void ion_buffer_put(struct ion_buffer *buffer)
 	else
 		ion_buffer_destroy(buffer);
 }
+=======
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	if (atomic_dec_and_test(&buffer->refcount)) {
 		if (heap->flags & ION_HEAP_FLAG_DEFER_FREE)
@@ -128,15 +151,22 @@ static struct ion_handle *ion_handle_create(struct ion_client *client,
 	};
 
 	idr_preload(GFP_KERNEL);
+<<<<<<< HEAD
 	spin_lock(&client->idr_lock);
 	handle->id = idr_alloc(&client->handle_idr, handle, 1, 0, GFP_ATOMIC);
 	spin_unlock(&client->idr_lock);
+=======
+	write_lock(&client->idr_lock);
+	handle->id = idr_alloc(&client->handle_idr, handle, 1, 0, GFP_ATOMIC);
+	write_unlock(&client->idr_lock);
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 	idr_preload_end();
 	if (handle->id < 0) {
 		kfree(handle);
 		return ERR_PTR(-ENOMEM);
 	}
 
+	RB_CLEAR_NODE(&handle->rnode);
 	return handle;
 }
 
@@ -144,6 +174,7 @@ void ion_handle_put(struct ion_handle *handle, int count)
 {
 	struct ion_buffer *buffer = handle->buffer;
 	struct ion_client *client = handle->client;
+<<<<<<< HEAD
 
 	if (!atomic_sub_return(count, &handle->refcount)) {
 		spin_lock(&client->idr_lock);
@@ -156,6 +187,24 @@ void ion_handle_put(struct ion_handle *handle, int count)
 
 		ion_buffer_put(buffer);
 		kfree_rcu(handle, rcu);
+=======
+	bool do_free;
+
+	write_lock(&client->rb_lock);
+	write_lock(&client->idr_lock);
+	do_free = !atomic_sub_return(count, &handle->refcount);
+	if (do_free) {
+		idr_remove(&client->handle_idr, handle->id);
+		if (!RB_EMPTY_NODE(&handle->rnode))
+			rb_erase(&handle->rnode, &client->handle_root);
+	}
+	write_unlock(&client->idr_lock);
+	write_unlock(&client->rb_lock);
+
+	if (do_free) {
+		ion_buffer_put(buffer);
+		kfree(handle);
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 	}
 }
 
@@ -183,6 +232,7 @@ void *__ion_map_kernel(struct ion_buffer *buffer)
 	mutex_unlock(&buffer->kmap_lock);
 
 	return vaddr;
+<<<<<<< HEAD
 }
 
 void __ion_unmap_kernel(struct ion_buffer *buffer)
@@ -195,6 +245,20 @@ void __ion_unmap_kernel(struct ion_buffer *buffer)
 	mutex_unlock(&buffer->kmap_lock);
 }
 
+=======
+}
+
+void __ion_unmap_kernel(struct ion_buffer *buffer)
+{
+	struct ion_heap *heap = buffer->heap;
+
+	mutex_lock(&buffer->kmap_lock);
+	if (!--buffer->kmap_refcount)
+		heap->ops->unmap_kernel(heap, buffer);
+	mutex_unlock(&buffer->kmap_lock);
+}
+
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 struct ion_buffer *__ion_alloc(struct ion_device *idev, size_t len,
 			       size_t align, unsigned int heap_id_mask,
 			       unsigned int flags)
@@ -262,8 +326,8 @@ static struct sg_table *ion_map_dma_buf(struct dma_buf_attachment *attachment,
 					enum dma_data_direction dir)
 {
 	struct dma_buf *dmabuf = attachment->dmabuf;
-	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
-	struct sg_table *table;
+	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer),
+						 iommu_data);
 
 	return ion_dup_sg_table(buffer->sg_table);
 }
@@ -278,17 +342,19 @@ static void ion_unmap_dma_buf(struct dma_buf_attachment *attachment,
 
 static int ion_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
 {
-	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
-	int ret = 0;
+	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer),
+						 iommu_data);
+	struct ion_heap *heap = buffer->heap;
 
-	if (!buffer->heap->ops->map_user) {
-		pr_err("%s: this heap does not define a method for mapping to userspace\n",
-			__func__);
+	if (!heap->ops->map_user)
 		return -EINVAL;
+<<<<<<< HEAD
 	}
 
 	if (!heap->ops->map_user)
 		return -EINVAL;
+=======
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	if (!(buffer->flags & ION_FLAG_CACHED))
 		vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
@@ -298,14 +364,16 @@ static int ion_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
 
 static void ion_dma_buf_release(struct dma_buf *dmabuf)
 {
-	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
+	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer),
+						 iommu_data);
 
 	ion_buffer_put(buffer);
 }
 
 static void *ion_dma_buf_kmap(struct dma_buf *dmabuf, unsigned long offset)
 {
-	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
+	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer),
+						 iommu_data);
 
 	return buffer->vaddr + offset * PAGE_SIZE;
 }
@@ -313,8 +381,13 @@ static void *ion_dma_buf_kmap(struct dma_buf *dmabuf, unsigned long offset)
 static int ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, size_t start,
 					size_t len, enum dma_data_direction dir)
 {
+<<<<<<< HEAD
 	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
 	void *vaddr;
+=======
+	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer),
+						 iommu_data);
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	return PTR_RET(__ion_map_kernel(buffer));
 }
@@ -322,7 +395,8 @@ static int ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, size_t start,
 static void ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf, size_t start,
 				       size_t len, enum dma_data_direction dir)
 {
-	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
+	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer),
+						 iommu_data);
 
 	__ion_unmap_kernel(buffer);
 }
@@ -347,6 +421,7 @@ struct dma_buf *__ion_share_dma_buf(struct ion_buffer *buffer)
 		.priv = &buffer->iommu_data
 	};
 	struct dma_buf *dmabuf;
+<<<<<<< HEAD
 
 	bool valid_handle;
 
@@ -368,6 +443,8 @@ struct dma_buf *__ion_share_dma_buf(struct ion_buffer *buffer)
 	exp_info.size = buffer->size;
 	exp_info.flags = O_RDWR;
 	exp_info.priv = &buffer->iommu_data;
+=======
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	dmabuf = dma_buf_export(&exp_info);
 	if (!IS_ERR(dmabuf))
@@ -401,13 +478,8 @@ struct ion_buffer *__ion_import_dma_buf(int fd)
 	if (IS_ERR(dmabuf))
 		return ERR_CAST(dmabuf);
 
-	if (dmabuf->ops != &dma_buf_ops) {
-		pr_err("%s: can not import dmabuf from another exporter\n",
-		       __func__);
-		dma_buf_put(dmabuf);
-		return ERR_PTR(-EINVAL);
-	}
 	buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
+<<<<<<< HEAD
 
 	if (lock_client)
 		mutex_lock(&client->lock);
@@ -502,6 +574,74 @@ static struct ion_handle *ion_handle_get_by_buffer(struct ion_client *client,
 
 static long ion_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
+=======
+	atomic_inc(&buffer->refcount);
+	dma_buf_put(dmabuf);
+	return buffer;
+}
+
+struct ion_handle *ion_handle_get_by_id(struct ion_client *client, int id)
+{
+	struct ion_handle *handle;
+
+	read_lock(&client->idr_lock);
+	handle = idr_find(&client->handle_idr, id);
+	if (handle)
+		atomic_inc(&handle->refcount);
+	read_unlock(&client->idr_lock);
+
+	return handle ? handle : ERR_PTR(-EINVAL);
+}
+
+static void ion_handle_rb_add(struct ion_client *client,
+			      struct ion_handle *handle)
+{
+	struct rb_node **p = &client->handle_root.rb_node;
+	struct ion_buffer *buffer = handle->buffer;
+	struct rb_node *parent = NULL;
+	struct ion_handle *entry;
+
+	write_lock(&client->rb_lock);
+	while (*p) {
+		parent = *p;
+		entry = rb_entry(parent, typeof(*entry), rnode);
+		if (buffer < entry->buffer)
+			p = &(*p)->rb_left;
+		else
+			p = &(*p)->rb_right;
+	}
+	rb_link_node(&handle->rnode, parent, p);
+	rb_insert_color(&handle->rnode, &client->handle_root);
+	write_unlock(&client->rb_lock);
+}
+
+static struct ion_handle *ion_handle_get_by_buffer(struct ion_client *client,
+						   struct ion_buffer *buffer)
+{
+	struct rb_node **p = &client->handle_root.rb_node;
+	struct ion_handle *entry;
+
+	read_lock(&client->rb_lock);
+	while (*p) {
+		entry = rb_entry(*p, typeof(*entry), rnode);
+		if (buffer < entry->buffer) {
+			p = &(*p)->rb_left;
+		} else if (buffer > entry->buffer) {
+			p = &(*p)->rb_right;
+		} else {
+			atomic_inc(&entry->refcount);
+			read_unlock(&client->rb_lock);
+			return entry;
+		}
+	}
+	read_unlock(&client->rb_lock);
+
+	return ERR_PTR(-EINVAL);
+}
+
+static long ion_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 	union {
 		struct ion_fd_data fd;
 		struct ion_allocation_data allocation;
@@ -631,8 +771,13 @@ static int ion_open(struct inode *inode, struct file *file)
 	*client = (typeof(*client)){
 		.idev = idev,
 		.handle_idr = IDR_INIT(client->handle_idr),
+<<<<<<< HEAD
 		.idr_lock = __SPIN_LOCK_UNLOCKED(client->idr_lock),
 		.rb_lock = __SPIN_LOCK_UNLOCKED(client->rb_lock)
+=======
+		.idr_lock = __RW_LOCK_UNLOCKED(client->idr_lock),
+		.rb_lock = __RW_LOCK_UNLOCKED(client->rb_lock)
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 	};
 
 	file->private_data = client;
@@ -686,6 +831,29 @@ int ion_walk_heaps(struct ion_client *client, int heap_id,
 	struct ion_device *idev = client->idev;
 	struct ion_heap *heap;
 	int ret = 0;
+<<<<<<< HEAD
+=======
+
+	down_write(&idev->heap_rwsem);
+	plist_for_each_entry(heap, &idev->heaps, node) {
+		if (heap->type == type && ION_HEAP(heap->id) == heap_id) {
+			ret = f(heap, data);
+			break;
+		}
+	}
+	up_write(&idev->heap_rwsem);
+
+	return ret;
+}
+
+static int ion_debug_allbufs_show(struct seq_file *s, void *unused)
+{
+	struct ion_device *dev = s->private;
+	struct rb_node *n;
+
+	seq_printf(s, "%16.s %16.s %12.s %12.s %20.s    %s\n", "heap",
+		"buffer", "size", "ref cnt", "allocator", "references");
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	down_write(&idev->heap_rwsem);
 	plist_for_each_entry(heap, &idev->heaps, node) {

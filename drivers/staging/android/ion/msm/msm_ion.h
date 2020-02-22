@@ -193,6 +193,11 @@ static inline struct sg_table *ion_sg_table(struct ion_client *client,
 
 	return buffer->sg_table;
 }
+<<<<<<< HEAD
+=======
+
+bool is_buffer_hlos_assigned(struct ion_buffer *buffer);
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 #else
 static inline struct ion_client *msm_ion_client_create(const char *name)

@@ -265,6 +265,19 @@ static inline void *ion_import_dma_buf(struct ion_client *client, int fd)
 {
 	return __ion_import_dma_buf(fd);
 }
+<<<<<<< HEAD
+=======
+
+/**
+ * ion_dma_buf_is_secure() - Returns true if the dma buf is secure
+ * dmabuf
+ * @dmabuf: pointer to a dma-buf
+ *
+ * Given a dma-buf pointer, return true if ion created it and it is from
+ * a secure heap.
+ */
+bool ion_dma_buf_is_secure(struct dma_buf *dmabuf);
+>>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 #else
 static inline void ion_reserve(struct ion_platform_data *data)
