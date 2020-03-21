@@ -125,6 +125,52 @@ static uint32_t igc_Table_Inverted[IGC_LUT_ENTRIES] = {
 	3145776, 2097184, 1048592, 0
 };
 
+int kcal_custom_mode = 0;
+int prev_kcal_r, prev_kcal_g, prev_kcal_b;
+int prev_kcal_min, prev_kcal_sat, prev_kcal_val, prev_kcal_cont;
+int user_kcal_r, user_kcal_g, user_kcal_b;
+int user_kcal_min, user_kcal_sat, user_kcal_val, user_kcal_cont;
+int mode_kcal_r, mode_kcal_g, mode_kcal_b;
+int mode_kcal_min, mode_kcal_sat, mode_kcal_val, mode_kcal_cont;
+bool prev_backlight_dimmer, mode_backlight_dimmer;
+extern bool backlight_dimmer;
+
+#ifdef CONFIG_KLAPSE
+struct kcal_lut_data *lut_cpy;
+#endif
+
+struct mdss_mdp_ctl *fb0_ctl = 0;
+
+static void kcal_mode_save_prev(struct device *dev) {
+
+    struct kcal_lut_data *lut_data = dev_get_drvdata(dev);
+
+    prev_kcal_r = lut_data->red;
+    prev_kcal_g = lut_data->green;
+    prev_kcal_b = lut_data->blue;
+    prev_kcal_min = lut_data->minimum;
+    prev_kcal_sat = lut_data->sat;
+    prev_kcal_val = lut_data->val;
+    prev_kcal_cont = lut_data->cont;
+    prev_backlight_dimmer = backlight_dimmer;
+
+}
+
+static void kcal_mode_save_mode(struct device *dev) {
+
+    struct kcal_lut_data *lut_data = dev_get_drvdata(dev);
+
+    lut_data->red = mode_kcal_r;
+    lut_data->green = mode_kcal_g;
+    lut_data->blue = mode_kcal_b;
+    lut_data->minimum = mode_kcal_min;
+    lut_data->sat = mode_kcal_sat;
+    lut_data->val = mode_kcal_val;
+    lut_data->cont = mode_kcal_cont;
+    backlight_dimmer = mode_backlight_dimmer;
+
+}
+
 static uint32_t igc_Table_RGB[IGC_LUT_ENTRIES] = {
 	4080, 4064, 4048, 4032, 4016, 4000, 3984, 3968, 3952, 3936, 3920, 3904,
 	3888, 3872, 3856, 3840, 3824, 3808, 3792, 3776, 3760, 3744, 3728, 3712,
@@ -578,6 +624,33 @@ static int mdss_mdp_kcal_update_queue(struct device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_KLAPSE
+void klapse_kcal_push(int r, int g, int b)
+{
+	lut_cpy->red = r;
+	lut_cpy->green = g;
+	lut_cpy->blue = b;
+
+	mdss_mdp_kcal_update_pcc(lut_cpy);
+}
+
+/* kcal_get_color() :
+ * @param : 0 = red; 1 = green; 2 = blue;
+ * @return : Value of color corresponding to @param, or 0 if not found
+ */
+unsigned short kcal_get_color(unsigned short int code)
+{
+  if (code == 0)
+    return lut_cpy->red;
+  else if (code == 1)
+    return lut_cpy->green;
+  else if (code == 2)
+    return lut_cpy->blue;
+
+  return 0;
+}
+#endif
+
 #if defined(CONFIG_FB) && !defined(CONFIG_MMI_PANEL_NOTIFICATIONS)
 static int fb_notifier_callback(struct notifier_block *nb,
 	unsigned long event, void *data)
@@ -627,6 +700,10 @@ static int kcal_ctrl_probe(struct platform_device *pdev)
 	mdss_mdp_kcal_update_pcc(lut_data);
 	mdss_mdp_kcal_update_pa(lut_data);
 	mdss_mdp_kcal_update_igc(lut_data);
+
+#ifdef CONFIG_KLAPSE
+	lut_cpy = lut_data;
+#endif
 
 #if defined(CONFIG_MMI_PANEL_NOTIFICATIONS)
 	lut_data->panel_nb.display_on = mdss_mdp_kcal_update_queue;
