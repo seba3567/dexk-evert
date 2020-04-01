@@ -13,6 +13,7 @@
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
 #include <linux/module.h>
+#include <linux/cpu_input_boost.h>
 #include "msm_sd.h"
 #include "msm_actuator.h"
 #include "msm_cci.h"
@@ -582,6 +583,8 @@ static int32_t msm_actuator_move_focus(
 	struct msm_camera_i2c_reg_setting reg_setting;
 
 	CDBG("called, dir %d, num_steps %d\n", dir, num_steps);
+
+	cpu_input_boost_kick_max(100);
 
 	if (a_ctrl->step_position_table == NULL) {
 		pr_err("Step Position Table is NULL\n");
