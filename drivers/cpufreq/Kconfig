@@ -431,4 +431,12 @@ config BOOST_CONTROL
 	help
 	  A simple driver to control boosts in userspace.
 
+if BOOST_CONTROL
+config APP_LAUNCH_BOOST_MS
+	int "app launch boost time"
+	default "0"
+	help
+	  app launch boost time in ms.
+
+endif
 endmenu
