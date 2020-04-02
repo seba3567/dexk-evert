@@ -438,5 +438,11 @@ config APP_LAUNCH_BOOST_MS
 	help
 	  app launch boost time in ms.
 
+config LMK_BOOST_MS
+	int "lmk boost time"
+	default "100"
+	help
+	  lmk boost time in ms.
+
 endif
 endmenu
