@@ -10,6 +10,7 @@
 #include <linux/fb.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
+#include <linux/sched/sysctl.h>
 #include <linux/boost_control.h>
 
 unsigned long last_input_time;
@@ -139,6 +140,8 @@ void cpu_input_boost_kick_max(unsigned int duration_ms)
 {
 	struct boost_drv *b = &boost_drv_g;
 
+	sysctl_sched_energy_aware = 0;
+
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	do_stune_boost("top-app", dynamic_stune_boost);
 	#endif
@@ -166,6 +169,8 @@ static void max_unboost_worker(struct work_struct *work)
 
 	clear_bit(MAX_BOOST, &b->state);
 	wake_up(&b->boost_waitq);
+
+	sysctl_sched_energy_aware = 1;
 
 	#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	reset_stune_boost("top-app");
