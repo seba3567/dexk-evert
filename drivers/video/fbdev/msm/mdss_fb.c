@@ -5038,11 +5038,8 @@ static int mdss_fb_atomic_commit_ioctl(struct fb_info *info,
 	struct msm_fb_data_type *mfd;
 	struct mdss_overlay_private *mdp5_data = NULL;
 	struct mdss_data_type *mdata;
-<<<<<<< HEAD
-=======
 	struct mdp_destination_scaler_data ds_data[2];
 	struct mdp_scale_data_v2 scale_data[2];
->>>>>>> 934938cf5981... msm: mdss: Don't allocate memory dynamically for destination scaler
 
 	ret = copy_from_user(&commit, argp, sizeof(struct mdp_layer_commit));
 	if (ret) {
@@ -5152,13 +5149,10 @@ static int mdss_fb_atomic_commit_ioctl(struct fb_info *info,
 			ret = -EPERM;
 			goto err;
 		}
-<<<<<<< HEAD
-		ret = __mdss_fb_copy_destscaler_data(info, &commit);
-=======
+
 		ret = __mdss_fb_copy_destscaler_data(info, &commit, ds_data,
 						     scale_data);
 
->>>>>>> 934938cf5981... msm: mdss: Don't allocate memory dynamically for destination scaler
 		if (ret) {
 			pr_err("copy dest scaler failed\n");
 			goto err;

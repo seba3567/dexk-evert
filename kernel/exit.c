@@ -438,13 +438,16 @@ static void exit_mm(struct task_struct *tsk)
 	enter_lazy_tlb(mm, current);
 	task_unlock(tsk);
 	mm_update_next_owner(mm);
-	mmput(mm);
+
+	mm_released = mmput(mm);
 #ifdef CONFIG_ANDROID_SIMPLE_LMK
 	clear_thread_flag(TIF_MEMDIE);
 #else
 	if (test_thread_flag(TIF_MEMDIE))
 		exit_oom_victim();
 #endif
+	if (mm_released)
+		set_tsk_thread_flag(tsk, TIF_MM_RELEASED);
 }
 
 static struct task_struct *find_alive_thread(struct task_struct *p)
@@ -1680,3 +1683,4 @@ SYSCALL_DEFINE3(waitpid, pid_t, pid, int __user *, stat_addr, int, options)
 }
 
 #endif
+
