@@ -13,7 +13,7 @@
 
 #include <linux/module.h>
 
-bool enable_fb_boost=true;
+bool enable_fb_boost=false;
 module_param_named(enable_fb_boost, enable_fb_boost, bool, 0644);
 
 u32 input_boost_freq_perf=CONFIG_INPUT_BOOST_FREQ_PERF;
@@ -32,7 +32,7 @@ u32 cpubw_wake_boost_duration=CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS;
 module_param_named(cpubw_wake_boost_duration, cpubw_wake_boost_duration, int, 0644);
 
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
-u16 dynamic_stune_boost=5;
+u16 dynamic_stune_boost=1;
 module_param_named(dynamic_stune_boost, dynamic_stune_boost, short, 0644);
 #endif
 
