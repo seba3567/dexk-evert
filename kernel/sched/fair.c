@@ -5,13 +5,6 @@
  *
  *  Interactivity improvements by Mike Galbraith
  *  (C) 2007 Mike Galbraith <efault@gmx.de>
- */*
- * Completely Fair Scheduling (CFS) Class (SCHED_NORMAL/SCHED_BATCH)
- *
- *  Copyright (C) 2007 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
- *
- *  Interactivity improvements by Mike Galbraith
- *  (C) 2007 Mike Galbraith <efault@gmx.de>
  *
  *  Various enhancements by Dmitry Adamushko.
  *  (C) 2007 Dmitry Adamushko <dmitry.adamushko@gmail.com>
