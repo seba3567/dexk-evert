@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016, 2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -187,7 +187,6 @@ int msm_ion_do_cache_offset_op(
 		unsigned int cmd);
 
 <<<<<<< HEAD
-<<<<<<< HEAD
 bool is_buffer_hlos_assigned(struct ion_buffer *buffer);
 =======
 static inline struct sg_table *ion_sg_table(struct ion_client *client,
@@ -199,8 +198,6 @@ static inline struct sg_table *ion_sg_table(struct ion_client *client,
 }
 >>>>>>> 2f3a12eca9ce... ion: Rewrite to improve clarity and performance
 
-=======
->>>>>>> bd194f1cc4b3... ion: fetch from wahoo
 #else
 static inline struct ion_client *msm_ion_client_create(const char *name)
 {
@@ -226,6 +223,11 @@ int msm_ion_do_cache_offset_op(
 		unsigned int cmd)
 {
 	return -ENODEV;
+}
+
+static bool is_buffer_hlos_assigned(struct ion_buffer *buffer)
+{
+	return true;
 }
 
 #endif /* CONFIG_ION */
