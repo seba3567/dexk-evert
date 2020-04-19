@@ -4545,15 +4545,12 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_CRASH_FW_TIMEOUT_DISABLE,
 		CFG_CRASH_FW_TIMEOUT_ENABLE),
 <<<<<<< HEAD
-<<<<<<< HEAD
 =======
 	REG_VARIABLE(CFG_RX_WAKELOCK_TIMEOUT_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, rx_wakelock_timeout,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		0, 0, 0),
 >>>>>>> 192ab3189e93... qcacld: disable qcom_rx_wakelock
-=======
->>>>>>> 524ebc837b85... qcacld: nuke rx_wakelock code entirely
 
 	REG_VARIABLE(CFG_SAP_CH_SWITCH_BEACON_CNT, WLAN_PARAM_Integer,
 		     struct hdd_config, sap_chanswitch_beacon_cnt,
