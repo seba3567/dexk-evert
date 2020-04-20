@@ -1181,18 +1181,7 @@ static struct cpufreq_policy *cpufreq_policy_alloc(unsigned int cpu)
 	if (!zalloc_cpumask_var(&policy->real_cpus, GFP_KERNEL))
 		goto err_free_rcpumask;
 
-<<<<<<< HEAD
 	kobject_init(&policy->kobj, &ktype_cpufreq);
-=======
-	ret = kobject_init_and_add(&policy->kobj, &ktype_cpufreq,
-				   cpufreq_global_kobject, "policy%u", cpu);
-	if (ret) {
-		pr_err("%s: failed to init policy->kobj: %d\n", __func__, ret);
-		kobject_put(&policy->kobj);
-		goto err_free_real_cpus;
-	}
-
->>>>>>> 7fd2d2adc905... cpufreq: Fix kobject memleak
 	INIT_LIST_HEAD(&policy->policy_list);
 	init_rwsem(&policy->rwsem);
 	spin_lock_init(&policy->transition_lock);
