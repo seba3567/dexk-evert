@@ -41,7 +41,11 @@
 
 int sysctl_panic_on_oom;
 int sysctl_oom_kill_allocating_task;
+<<<<<<< HEAD
 int sysctl_oom_dump_tasks = 1;
+=======
+int sysctl_oom_dump_tasks = 0;
+>>>>>>> 7a835d5b136d... Disable OOMk debug & increase vmstats interval
 
 DEFINE_MUTEX(oom_lock);
 
