@@ -791,12 +791,20 @@ static struct cftype files[] = {
 	{
 		.name = "boost",
 		.read_s64 = boost_read,
+<<<<<<< HEAD
 		.write_s64 = boost_write,
+=======
+		.write_s64 = boost_write_wrapper,
+>>>>>>> parent of 2f8f0c0de930... sched/tune: SchedTune Assist: Update and apply init protection wrappers
 	},
 	{
 		.name = "prefer_idle",
 		.read_u64 = prefer_idle_read,
+<<<<<<< HEAD
 		.write_u64 = prefer_idle_write,
+=======
+		.write_u64 = prefer_idle_write_wrapper,
+>>>>>>> parent of 2f8f0c0de930... sched/tune: SchedTune Assist: Update and apply init protection wrappers
 	},
 #ifdef CONFIG_SCHED_HMP
 	{
