@@ -454,37 +454,12 @@ static struct ion_handle *user_ion_handle_get_check_overflow(
 	return handle;
 }
 
-<<<<<<< HEAD
 /* passes a kref to the user ref count.
  * We know we're holding a kref to the object before and
  * after this call, so no need to reverify handle.
  * Caller must hold the client lock, except for ION_IOC_ALLOC.
  */
 static struct ion_handle *pass_to_user(struct ion_handle *handle)
-=======
-static int ion_dma_buf_get_flags(struct dma_buf *dmabuf,
-				 unsigned long *flags)
-{
-	struct ion_buffer *buffer = dmabuf->priv;
-	*flags = buffer->flags;
-
- 	return 0;
-}
-
-static const struct dma_buf_ops ion_dma_buf_ops = {
-	.map_dma_buf = ion_map_dma_buf,
-	.unmap_dma_buf = ion_unmap_dma_buf,
-	.mmap = ion_mmap,
-	.release = ion_dma_buf_release,
-	.begin_cpu_access = ion_dma_buf_begin_cpu_access,
-	.end_cpu_access = ion_dma_buf_end_cpu_access,
-	.kmap_atomic = ion_dma_buf_kmap,
-	.kmap = ion_dma_buf_kmap,
-	.get_flags = ion_dma_buf_get_flags
-};
-
-struct dma_buf *__ion_share_dma_buf(struct ion_buffer *buffer)
->>>>>>> 65ba24db60c3... ion: add kernel support to get buffer flags
 {
 	struct ion_handle *ret;
 
