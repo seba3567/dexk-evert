@@ -1322,7 +1322,7 @@
 
         devfreq_compute: qcom,devfreq-compute {
 		compatible = "qcom,arm-cpu-mon";
-		qcom,cpulist = <&CPU0 &CPU1 &CPU2 &CPU3>;
+		qcom,cpulist = <&CPU100 &CPU101 &CPU102 &CPU103>;
 		qcom,target-dev = <&mincpubw>;
 		qcom,core-dev-table =
                         < 902400 762 >,
