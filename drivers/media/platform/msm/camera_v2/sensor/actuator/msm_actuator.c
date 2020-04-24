@@ -13,7 +13,7 @@
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
 #include <linux/module.h>
-#include <linux/cpu_general_boost.h>
+#include <linux/cpu_input_boost.h>
 #include <linux/devfreq_boost.h>
 #include "msm_sd.h"
 #include "msm_actuator.h"
@@ -585,7 +585,7 @@ static int32_t msm_actuator_move_focus(
 
 	CDBG("called, dir %d, num_steps %d\n", dir, num_steps);
 
-	cpu_general_boost_kick_max(50);
+	cpu_input_boost_kick_max(50);
 	devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 50);
 
 	if (a_ctrl->step_position_table == NULL) {
