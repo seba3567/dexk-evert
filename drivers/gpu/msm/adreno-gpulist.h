@@ -15,7 +15,6 @@
 
 static const struct adreno_gpu_core adreno_gpulist[] = {
 	{
-<<<<<<< HEAD
 		.gpurev = ADRENO_REV_A306,
 		.core = 3,
 		.major = 0,
@@ -285,8 +284,6 @@ static const struct adreno_gpu_core adreno_gpulist[] = {
 		.max_power = 5448,
 	},
 	{
-=======
->>>>>>> 4d4372bb4f3f... adreno: disable snapshot, coresight and trace
 		.gpurev = ADRENO_REV_A512,
 		.core = 5,
 		.major = 1,
@@ -302,7 +299,7 @@ static const struct adreno_gpu_core adreno_gpulist[] = {
 		.num_protected_regs = 0x20,
 		.busy_mask = 0xFFFFFFFE,
 	},
-        {
+	{
 		.gpurev = ADRENO_REV_A509,
 		.core = 5,
 		.major = 0,
@@ -315,7 +312,23 @@ static const struct adreno_gpu_core adreno_gpulist[] = {
 		.zap_name = "a512_zap",
 		.gpudev = &adreno_a5xx_gpudev,
 		.gmem_size = (SZ_256K + SZ_16K),
-   		.num_protected_regs = 0x20,
+		.num_protected_regs = 0x20,
 		.busy_mask = 0xFFFFFFFE,
-	}
+	},
+	{
+		.gpurev = ADRENO_REV_A508,
+		.core = 5,
+		.major = 0,
+		.minor = 8,
+		.patchid = ANY_ID,
+		.features = ADRENO_PREEMPTION | ADRENO_64BIT |
+			ADRENO_CONTENT_PROTECTION | ADRENO_CPZ_RETENTION,
+		.pm4fw_name = "a530_pm4.fw",
+		.pfpfw_name = "a530_pfp.fw",
+		.zap_name = "a508_zap",
+		.gpudev = &adreno_a5xx_gpudev,
+		.gmem_size = (SZ_128K + SZ_8K),
+		.num_protected_regs = 0x20,
+		.busy_mask = 0xFFFFFFFE,
+	},
 };

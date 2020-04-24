@@ -8,6 +8,7 @@ msm_kgsl_core-y = \
 	kgsl_pwrctrl.o \
 	kgsl_pwrscale.o \
 	kgsl_mmu.o \
+	kgsl_snapshot.o \
 	kgsl_events.o \
 	kgsl_pool.o
 
@@ -23,7 +24,6 @@ msm_adreno-y += \
 	adreno_ringbuffer.o \
 	adreno_drawctxt.o \
 	adreno_dispatch.o \
-<<<<<<< HEAD
 	adreno_snapshot.o \
 	adreno_coresight.o \
 	adreno_a3xx.o \
@@ -33,9 +33,6 @@ msm_adreno-y += \
 	adreno_a4xx_snapshot.o \
 	adreno_a5xx_snapshot.o \
 	adreno_a4xx_preempt.o \
-=======
-	adreno_a5xx.o \
->>>>>>> 4d4372bb4f3f... adreno: disable snapshot, coresight and trace
 	adreno_a5xx_preempt.o \
 	adreno_sysfs.o \
 	adreno.o \
