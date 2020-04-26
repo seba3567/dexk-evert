@@ -690,7 +690,7 @@
 				qcom,cpr-fuse-combos = <32>;
 				qcom,cpr-speed-bins = <4>;
 				qcom,cpr-speed-bin-corners = <9 9 9 9>;
-				qcom,cpr-corners = <8>;
+				qcom,cpr-corners = <9>;
 				qcom,cpr-corner-fmax-map = <2 4 9>;
 
 				qcom,cpr-voltage-ceiling =
