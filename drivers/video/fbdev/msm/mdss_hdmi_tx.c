@@ -4294,6 +4294,9 @@ static int hdmi_tx_evt_handle_resume(struct hdmi_tx_ctrl *hdmi_ctrl)
 	if (hdmi_tx_is_cec_wakeup_en(hdmi_ctrl))
 		hdmi_ctrl->mdss_util->disable_wake_irq(&hdmi_tx_hw);
 
+	if (hdmi_tx_is_cec_wakeup_en(hdmi_ctrl))
+		hdmi_ctrl->mdss_util->disable_wake_irq(&hdmi_tx_hw);
+
 end:
 	return rc;
 }
