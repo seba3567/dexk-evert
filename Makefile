@@ -1,10 +1,6 @@
 VERSION = 4
 PATCHLEVEL = 4
-<<<<<<< HEAD
 SUBLEVEL = 221
-=======
-SUBLEVEL = 222
->>>>>>> ecda8b584a57... Merge branch 'linux-4.4.y' of https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux into staging
 EXTRAVERSION =
 NAME = Blurry Fish Butt
 
