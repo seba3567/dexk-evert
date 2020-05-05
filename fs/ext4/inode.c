@@ -4309,7 +4309,11 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	uid_t i_uid;
 	gid_t i_gid;
 
+<<<<<<< HEAD
 	if (((flags & EXT4_IGET_NORMAL) &&
+=======
+	if ((!(flags & EXT4_IGET_SPECIAL) &&
+>>>>>>> ecda8b584a57... Merge branch 'linux-4.4.y' of https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux into staging
 	     (ino < EXT4_FIRST_INO(sb) && ino != EXT4_ROOT_INO)) ||
 	    (ino < EXT4_ROOT_INO) ||
 	    (ino > le32_to_cpu(EXT4_SB(sb)->s_es->s_inodes_count))) {
