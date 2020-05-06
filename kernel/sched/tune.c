@@ -23,9 +23,7 @@ extern struct target_nrg schedtune_target_nrg;
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
 static DEFINE_MUTEX(stune_boost_mutex);
 static struct schedtune *getSchedtune(char *st_name);
-
-static int dynamic_boost_write(struct schedtune *st, int boost);
-
+static int dynamic_boost(struct schedtune *st, int boost);
 #endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 /* Performance Boost region (B) threshold params */
@@ -972,11 +970,7 @@ static struct schedtune *getSchedtune(char *st_name)
 	return NULL;
 }
 
-<<<<<<< HEAD
 static int dynamic_boost(struct schedtune *st, int boost)
-=======
-static int dynamic_boost_write(struct schedtune *st, int boost)
->>>>>>> 16fff278ab63... sched/tune: Add initial support for Dynamic SchedTune Boost
 {
 	int ret;
 	/* Backup boost_default */
@@ -990,29 +984,15 @@ static int dynamic_boost_write(struct schedtune *st, int boost)
 	return ret;
 }
 
-<<<<<<< HEAD
 static int _do_stune_boost(struct schedtune *st, int boost)
 {
 	int ret = 0;
-=======
-int do_stune_boost(char *st_name, int boost)
-{
-	int ret = 0;
-	struct schedtune *st = getSchedtune(st_name);
-
-	if (!st)
-		return -EINVAL;
->>>>>>> 16fff278ab63... sched/tune: Add initial support for Dynamic SchedTune Boost
 
 	mutex_lock(&stune_boost_mutex);
 
 	/* Boost if new value is greater than current */
 	if (boost > st->boost)
-<<<<<<< HEAD
 		ret = dynamic_boost(st, boost);
-=======
-		ret = dynamic_boost_write(st, boost);
->>>>>>> 16fff278ab63... sched/tune: Add initial support for Dynamic SchedTune Boost
 
 	mutex_unlock(&stune_boost_mutex);
 
@@ -1028,16 +1008,11 @@ int reset_stune_boost(char *st_name)
 		return -EINVAL;
 
 	mutex_lock(&stune_boost_mutex);
-<<<<<<< HEAD
 	ret = dynamic_boost(st, st->boost_default);
-=======
-	ret = dynamic_boost_write(st, st->boost_default);
->>>>>>> 16fff278ab63... sched/tune: Add initial support for Dynamic SchedTune Boost
 	mutex_unlock(&stune_boost_mutex);
 
 	return ret;
 }
-<<<<<<< HEAD
 
 int do_stune_boost(char *st_name, int boost)
 {
@@ -1049,8 +1024,6 @@ int do_stune_boost(char *st_name, int boost)
 	return _do_stune_boost(st, boost);
 }
 
-=======
->>>>>>> 16fff278ab63... sched/tune: Add initial support for Dynamic SchedTune Boost
 #endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 #else /* CONFIG_CGROUP_SCHEDTUNE */
