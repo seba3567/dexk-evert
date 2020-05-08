@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2017,2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -3596,8 +3596,11 @@ static void hdmi_tx_hpd_off(struct hdmi_tx_ctrl *hdmi_ctrl)
 	hdmi_ctrl->hpd_initialized = false;
 	hdmi_ctrl->hpd_off_pending = false;
 	hdmi_ctrl->dc_support = false;
+<<<<<<< HEAD
 
 	hdmi_edid_reset_parser(hdmi_tx_get_fd(HDMI_TX_FEAT_EDID));
+=======
+>>>>>>> 2951ab4a4b64... Merge tag 'LA.UM.8.2.r1-06300-sdm660.0' into kernel.lnx.4.4.r38-rel
 
 	DEV_DBG("%s: HPD is now OFF\n", __func__);
 } /* hdmi_tx_hpd_off */
@@ -4290,6 +4293,9 @@ static int hdmi_tx_evt_handle_resume(struct hdmi_tx_ctrl *hdmi_ctrl)
 		goto end;
 	}
 #endif
+
+	if (hdmi_tx_is_cec_wakeup_en(hdmi_ctrl))
+		hdmi_ctrl->mdss_util->disable_wake_irq(&hdmi_tx_hw);
 
 	if (hdmi_tx_is_cec_wakeup_en(hdmi_ctrl))
 		hdmi_ctrl->mdss_util->disable_wake_irq(&hdmi_tx_hw);
