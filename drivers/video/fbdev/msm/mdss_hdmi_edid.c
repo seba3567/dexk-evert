@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2017,2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1946,9 +1946,12 @@ static void hdmi_edid_add_sink_video_format(struct hdmi_edid_ctrl *edid_ctrl,
 	struct disp_mode_info *disp_mode_list = sink_data->disp_mode_list;
 	u32 i = 0;
 	bool y420_supported = false;
+<<<<<<< HEAD
 
 	if (force_format)
 		video_format = force_format;
+=======
+>>>>>>> 2951ab4a4b64... Merge tag 'LA.UM.8.2.r1-06300-sdm660.0' into kernel.lnx.4.4.r38-rel
 
 	if (video_format >= HDMI_VFRMT_MAX) {
 		DEV_ERR("%s: video format: %s is not supported\n", __func__,
@@ -2623,6 +2626,7 @@ int hdmi_edid_parser(void *input)
 			edid_buf += EDID_BLOCK_SIZE;
 			continue;
 		}
+<<<<<<< HEAD
 
 		/* goto to CEA extension edid block */
 		edid_buf += EDID_BLOCK_SIZE;
@@ -2635,6 +2639,20 @@ int hdmi_edid_parser(void *input)
 		else
 			edid_ctrl->sink_mode = SINK_MODE_DVI;
 
+=======
+
+		/* goto to CEA extension edid block */
+		edid_buf += EDID_BLOCK_SIZE;
+
+		ieee_reg_id = hdmi_edid_extract_ieee_reg_id(edid_ctrl,
+				edid_buf);
+		DEV_DBG("%s: ieee_reg_id = 0x%06x\n", __func__, ieee_reg_id);
+		if (ieee_reg_id == EDID_IEEE_REG_ID)
+			edid_ctrl->sink_mode = SINK_MODE_HDMI;
+		else
+			edid_ctrl->sink_mode = SINK_MODE_DVI;
+
+>>>>>>> 2951ab4a4b64... Merge tag 'LA.UM.8.2.r1-06300-sdm660.0' into kernel.lnx.4.4.r38-rel
 		if (ieee_reg_id == EDID_IEEE_REG_ID) {
 			hdmi_edid_extract_sink_caps(edid_ctrl, edid_buf);
 			hdmi_edid_extract_latency_fields(edid_ctrl, edid_buf);
@@ -3005,7 +3023,10 @@ void hdmi_edid_set_video_resolution(void *input, u32 resolution, bool reset)
 			resolution;
 		edid_ctrl->sink_data.disp_mode_list[0].rgb_support = true;
 		edid_ctrl->override_default_vic = true;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2951ab4a4b64... Merge tag 'LA.UM.8.2.r1-06300-sdm660.0' into kernel.lnx.4.4.r38-rel
 	}
 } /* hdmi_edid_set_video_resolution */
 
