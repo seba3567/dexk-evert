@@ -39,20 +39,59 @@ static void remove_flag(char *cmd, const char *flag)
 
 static void remove_safetynet_flags(char *cmd)
 {
+<<<<<<< HEAD
 	remove_flag(cmd, "androidboot.enable_dm_verity=");
 	remove_flag(cmd, "androidboot.secboot=");
 	remove_flag(cmd, "androidboot.verifiedbootstate=");
+=======
+>>>>>>> f091f1b44cfe (cmdline: replace instead of remove for SafetyNet CTS pass)
 	remove_flag(cmd, "androidboot.veritymode=");
 }
+
+#if 1
+static void replace_flag(char *cmd, const char *flag, const char *flag_new)
+{
+	char *start_addr, *end_addr;
+
+	/* Ensure all instances of a flag are replaced */
+	while ((start_addr = strstr(cmd, flag))) {
+		end_addr = strchr(start_addr, ' ');
+		if (end_addr)
+			memcpy(start_addr, flag_new, strlen(flag));
+		else
+			*(start_addr - 1) = '\0';
+	}
+}
+
+static void replace_safetynet_flags(char *cmd)
+{
+	// WARNING: be aware that you can't replace shorter string with longer ones in the function called here...
+	replace_flag(cmd, "androidboot.vbmeta.device_state=unlocked",
+			  "androidboot.vbmeta.device_state=locked  ");
+	replace_flag(cmd, "androidboot.enable_dm_verity=0",
+			  "androidboot.enable_dm_verity=1");
+	replace_flag(cmd, "androidboot.secboot=disabled",
+			  "androidboot.secboot=enabled ");
+	replace_flag(cmd, "androidboot.verifiedbootstate=orange",
+			  "androidboot.verifiedbootstate=green ");
+}
+#endif
 
 static int __init proc_cmdline_init(void)
 {
 	strcpy(new_command_line, saved_command_line);
 
 	/*
+<<<<<<< HEAD
 	 * Remove various flags from command line seen by userspace in order to
 	 * pass SafetyNet CTS check.
 	 */
+=======
+	 * Remove/replace various flags from command line seen by userspace in order to
+	 * pass SafetyNet CTS check.
+	 */
+	replace_safetynet_flags(new_command_line);
+>>>>>>> f091f1b44cfe (cmdline: replace instead of remove for SafetyNet CTS pass)
 	remove_safetynet_flags(new_command_line);
 
 	proc_create("cmdline", 0, NULL, &cmdline_proc_fops);
