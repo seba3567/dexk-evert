@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, 2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -622,6 +622,12 @@ static inline int __msm_remove_session_cmd_ack_q(void *d1, void *d2)
 {
 	struct msm_command_ack *cmd_ack = d1;
 
+<<<<<<< HEAD
+=======
+	if (&cmd_ack->command_q == NULL)
+		return 0;
+
+>>>>>>> 80a1dda1582c... Merge tag 'LA.UM.8.2.r2-01900-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into panda-qrebase
 	msm_queue_drain(&cmd_ack->command_q, struct msm_command, list);
 
 	return 0;
@@ -629,7 +635,11 @@ static inline int __msm_remove_session_cmd_ack_q(void *d1, void *d2)
 
 static void msm_remove_session_cmd_ack_q(struct msm_session *session)
 {
+<<<<<<< HEAD
 	if (!session)
+=======
+	if ((!session) || (&session->command_ack_q == NULL))
+>>>>>>> 80a1dda1582c... Merge tag 'LA.UM.8.2.r2-01900-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into panda-qrebase
 		return;
 
 	mutex_lock(&session->lock);

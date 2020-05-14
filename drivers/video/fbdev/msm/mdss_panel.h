@@ -1100,6 +1100,11 @@ struct mdss_panel_data {
 	bool panel_disable_mode;
 
 	int panel_te_gpio;
+<<<<<<< HEAD
+=======
+	bool is_te_irq_enabled;
+	struct mutex te_mutex;
+>>>>>>> 80a1dda1582c... Merge tag 'LA.UM.8.2.r2-01900-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into panda-qrebase
 	struct completion te_done;
 };
 
@@ -1111,6 +1116,29 @@ struct mdss_panel_debugfs_info {
 	struct mdss_panel_debugfs_info *next;
 };
 
+<<<<<<< HEAD
+=======
+static inline void panel_update_te_irq(struct mdss_panel_data *pdata,
+					bool enable)
+{
+	if (!pdata) {
+		pr_err("Invalid Params\n");
+		return;
+	}
+
+	mutex_lock(&pdata->te_mutex);
+	if (enable && !pdata->is_te_irq_enabled) {
+		enable_irq(gpio_to_irq(pdata->panel_te_gpio));
+		pdata->is_te_irq_enabled = true;
+	} else if (!enable && pdata->is_te_irq_enabled) {
+		disable_irq(gpio_to_irq(pdata->panel_te_gpio));
+		pdata->is_te_irq_enabled = false;
+	}
+	mutex_unlock(&pdata->te_mutex);
+
+}
+
+>>>>>>> 80a1dda1582c... Merge tag 'LA.UM.8.2.r2-01900-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into panda-qrebase
 /**
  * mdss_get_panel_framerate() - get panel frame rate based on panel information
  * @panel_info:	Pointer to panel info containing all panel information
