@@ -1237,26 +1237,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	if (on_cmds->cmd_cnt)
 		mdss_dsi_panel_cmds_send(ctrl, on_cmds, CMD_REQ_COMMIT);
 
-<<<<<<< HEAD
-=======
-#ifdef CONFIG_MACH_MI
-	if (pinfo->panel_dead && pinfo->initial_esd_check.check_cmd
-		&& pinfo->initial_esd_check.check_value) {
-		memset((void *)rbuf, 0, PANEL_READ_CNT);
-		mdss_dsi_panel_cmd_read(ctrl, pinfo->initial_esd_check.check_cmd,
-			0x00, (void *)mdss_dsi_initial_read_cb, rbuf, 1);
-		if (rbuf[0] != pinfo->initial_esd_check.check_value) {
-			pr_info("%s: read panel fail, ret:%d\n", __func__, ret);
-			if (pinfo->initial_esd_check.panel_dead_report_delay)
-				schedule_delayed_work(&ctrl->panel_dead_report_work,
-					msecs_to_jiffies(pinfo->initial_esd_check.panel_dead_report_delay));
-		}
-	}
-
-	if (!pinfo->panel_on_dimming_delay)
-		mdss_panel_disparam_set(ctrl, PANEL_DIMMING_ON_CMD);
-#endif
-
 	if (pinfo->compression_mode == COMPRESSION_DSC)
 		mdss_dsi_panel_dsc_pps_send(ctrl, pinfo);
 
