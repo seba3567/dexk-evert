@@ -809,6 +809,7 @@
 		clock-names = "osm";
 		clocks = <&clock_cpu PERFCL_CLK>;
 		qcom,vdd-restriction-temp = <5>;
+                qcom,disable-vdd-rstr;
 		qcom,vdd-restriction-temp-hysteresis = <10>;
 
 		vdd-dig-supply = <&pm660l_s3_floor_level>;
