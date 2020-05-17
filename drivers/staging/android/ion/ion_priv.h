@@ -113,7 +113,8 @@ struct ion_buffer {
 struct ion_handle {
 	struct ion_buffer *buffer;
 	struct ion_client *client;
-	struct rb_node rnode;
+	struct latch_tree_node rnode;
+	struct rcu_head rcu;
 	atomic_t refcount;
 	int id;
 >>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
