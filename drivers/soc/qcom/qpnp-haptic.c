@@ -365,9 +365,6 @@ struct qpnp_hap {
 	u32				time_required_to_generate_back_emf_us;
 	u32				vmax_default_mv;
 	u32				vmax_mv;
-        u32                             vtg_min;
-	u32                             vtg_max;
-	u32                             vtg_default;
 	u32				ilim_ma;
 	u32				sc_deb_cycles;
 	u32				int_pwm_freq_khz;
@@ -893,10 +890,10 @@ static int qpnp_hap_vmax_config(struct qpnp_hap *hap, int vmax_mv,
 	if (hap->pmic_subtype != PM660_SUBTYPE)
 		overdrive = false;
 
-	if (hap->vmax_mv < hap->vtg_min)
-		hap->vmax_mv = hap->vtg_min;
-	else if (hap->vmax_mv > hap->vtg_max)
-		hap->vmax_mv = hap->vtg_max;
+	if (vmax_mv < QPNP_HAP_VMAX_MIN_MV)
+		vmax_mv = QPNP_HAP_VMAX_MIN_MV;
+	else if (vmax_mv > QPNP_HAP_VMAX_MAX_MV)
+		vmax_mv = QPNP_HAP_VMAX_MAX_MV;
 
 	val = (vmax_mv / QPNP_HAP_VMAX_MIN_MV) << QPNP_HAP_VMAX_SHIFT;
 	if (overdrive)
