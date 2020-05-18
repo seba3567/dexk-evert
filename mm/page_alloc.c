@@ -3139,9 +3139,7 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
 	unsigned long did_some_progress;
 	enum migrate_mode migration_mode = MIGRATE_ASYNC;
 	bool deferred_compaction = false;
-	int i, contended_compaction = COMPACT_CONTENDED_NONE;
-	pg_data_t *pgdat = ac->preferred_zone->zone_pgdat;
-	bool woke_kswapd = false;
+	int contended_compaction = COMPACT_CONTENDED_NONE;
 
 	/*
 	 * In the slowpath, we sanity check order to avoid ever trying to
@@ -3171,13 +3169,8 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
 		goto nopage;
 
 retry:
-	if (gfp_mask & __GFP_KSWAPD_RECLAIM) {
-		if (!woke_kswapd) {
-			atomic_inc(&pgdat->kswapd_waiters);
-			woke_kswapd = true;
-		}
+	if (gfp_mask & __GFP_KSWAPD_RECLAIM)
 		wake_all_kswapds(order, ac);
-	}
 
 	/*
 	 * OK, we're below the kswapd watermark and have kicked background
@@ -3233,10 +3226,8 @@ retry:
 		goto nopage;
 
 	/* Avoid allocations with no watermarks from looping endlessly */
-	if (test_thread_flag(TIF_MEMDIE) && !(gfp_mask & __GFP_NOFAIL)) {
-		gfp_mask |= __GFP_NOWARN;
+	if (test_thread_flag(TIF_MEMDIE) && !(gfp_mask & __GFP_NOFAIL))
 		goto nopage;
-	}
 
 	/*
 	 * Try direct compaction. The first pass is asynchronous. Subsequent
@@ -3280,7 +3271,7 @@ retry:
 			goto nopage;
 	}
 
-          /* Boost when memory is low so allocation latency doesn't get too bad */
+	/* Boost when memory is low so allocation latency doesn't get too bad */
 	cpu_input_boost_kick_max(100);
 	devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 100);
 
@@ -3301,9 +3292,6 @@ retry:
 	/* Do not loop if specifically requested */
 	if (gfp_mask & __GFP_NORETRY)
 		goto noretry;
-
-	/* Boost when memory is low so allocation latency doesn't get too bad */
-	devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 100);
 
 	/* Keep reclaiming pages as long as there is reasonable progress */
 	pages_reclaimed += did_some_progress;
@@ -3329,21 +3317,15 @@ noretry:
 	 * direct reclaim and reclaim/compaction depends on compaction
 	 * being called after reclaim so call directly if necessary
 	 */
-	for (i = order ? 4 : 0; i > 0; i--) {
-		page = __alloc_pages_direct_compact(gfp_mask, order,
-						    alloc_flags, ac,
-						    migration_mode,
-						    &contended_compaction,
-						    &deferred_compaction);
-		if (page)
-			goto got_pg;
-	}
+	page = __alloc_pages_direct_compact(gfp_mask, order, alloc_flags,
+					    ac, migration_mode,
+					    &contended_compaction,
+					    &deferred_compaction);
+	if (page)
+		goto got_pg;
 nopage:
+	warn_alloc_failed(gfp_mask, order, NULL);
 got_pg:
-	if (woke_kswapd)
-		atomic_dec(&pgdat->kswapd_waiters);
-	if (!page)
-		warn_alloc_failed(gfp_mask, order, NULL);
 	return page;
 }
 
@@ -5422,7 +5404,6 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat)
 	init_waitqueue_head(&pgdat->kcompactd_wait);
 #endif
 	pgdat_page_ext_init(pgdat);
-	pgdat->kswapd_waiters = (atomic_t)ATOMIC_INIT(0);
 
 	for (j = 0; j < MAX_NR_ZONES; j++) {
 		struct zone *zone = pgdat->node_zones + j;

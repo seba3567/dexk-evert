@@ -687,7 +687,6 @@ static int pp_pcc_cache_params_v1_7(struct mdp_pcc_cfg_data *config,
 			pr_err("failed to copy v17 pcc\n");
 			ret = -EFAULT;
 			goto pcc_config_exit;
-
 #endif
 		}
 		if ((config->ops & MDP_PP_OPS_DISABLE)) {
@@ -1896,3 +1895,4 @@ igc_config_exit:
 	}
 	return ret;
 }
+

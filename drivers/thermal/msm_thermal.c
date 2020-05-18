@@ -190,7 +190,7 @@ static bool ocr_enabled;
 static bool ocr_nodes_called;
 static bool ocr_probed;
 static bool ocr_reg_init_defer;
-static bool hotplug_enabled = false;
+static bool hotplug_enabled;
 static bool interrupt_mode_enable;
 static bool msm_thermal_probed;
 static bool gfx_crit_phase_ctrl_enabled;
@@ -5085,7 +5085,7 @@ done_cc:
 }
 
 static __refdata struct kobj_attribute cc_enabled_attr =
-__ATTR(disabled, 0644, show_cc_enabled, store_cc_enabled);
+__ATTR(enabled, 0644, show_cc_enabled, store_cc_enabled);
 
 static __refdata struct kobj_attribute cpus_offlined_attr =
 __ATTR(cpus_offlined, 0644, show_cpus_offlined, store_cpus_offlined);
@@ -5923,7 +5923,7 @@ static void thermal_cpu_hotplug_mit_disable(void)
 	struct device_clnt_data *clnt = NULL;
 
 	mutex_lock(&core_control_mutex);
-	hotplug_enabled = false;
+	hotplug_enabled = 0;
 	msm_thermal_init_cpu_mit(CPU_HOTPLUG_MITIGATION);
 	for_each_possible_cpu(cpu) {
 		if (!(msm_thermal_info.core_control_mask & BIT(cpu)))
@@ -6773,7 +6773,7 @@ static int probe_cc(struct device_node *node, struct msm_thermal_data *data,
 
 	if (num_possible_cpus() > 1) {
 		core_control_enabled = 1;
-		hotplug_enabled = false; /* Default true */
+		hotplug_enabled = 1;
 	}
 
 	key = "qcom,online-hotplug-core";
@@ -6824,7 +6824,7 @@ hotplug_node_fail:
 		dev_info(&pdev->dev,
 		"%s:Failed reading node=%s, key=%s. err=%d. KTM continues\n",
 			KBUILD_MODNAME, node->full_name, key, ret);
-		hotplug_enabled = false;
+		hotplug_enabled = 0;
 	}
 
 	return ret;
@@ -7316,7 +7316,7 @@ static void enable_config(int config_id)
 		cxip_lm_enabled = 1;
 		break;
 	case MSM_LIST_MAX_NR + HOTPLUG_CONFIG:
-		hotplug_enabled = false; /* Default true */
+		hotplug_enabled = 1;
 		break;
 	case MSM_LIST_MAX_NR + CPUFREQ_CONFIG:
 		freq_mitigation_enabled = 1;

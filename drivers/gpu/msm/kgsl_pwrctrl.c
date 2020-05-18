@@ -561,8 +561,8 @@ static ssize_t kgsl_pwrctrl_thermal_pwrlevel_store(struct device *dev,
 
 	mutex_lock(&device->mutex);
 
-	if (level > pwr->num_pwrlevels - 1)
-		level = pwr->num_pwrlevels - 1;
+	if (level > pwr->num_pwrlevels - 2)
+		level = pwr->num_pwrlevels - 2;
 
 	pwr->thermal_pwrlevel = level;
 
@@ -638,8 +638,8 @@ static void kgsl_pwrctrl_min_pwrlevel_set(struct kgsl_device *device,
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 
 	mutex_lock(&device->mutex);
-	if (level > pwr->num_pwrlevels - 1)
-		level = pwr->num_pwrlevels - 1;
+	if (level > pwr->num_pwrlevels - 2)
+		level = pwr->num_pwrlevels - 2;
 
 	/* You can't set a minimum power level lower than the maximum */
 	if (level < pwr->max_pwrlevel)
@@ -2360,9 +2360,8 @@ void kgsl_idle_check(struct work_struct *work)
 
 	requested_state = device->requested_state;
 
-	if ((requested_state != KGSL_STATE_NONE) &&
-		(device->state == KGSL_STATE_ACTIVE
-			|| device->state ==  KGSL_STATE_NAP)) {
+	if (device->state == KGSL_STATE_ACTIVE
+		   || device->state ==  KGSL_STATE_NAP) {
 
 		if (!atomic_read(&device->active_cnt)) {
 			spin_lock(&device->submit_lock);
@@ -2454,7 +2453,7 @@ static int kgsl_pwrctrl_enable(struct kgsl_device *device)
 		level = pwr->max_pwrlevel;
 		pwr->wakeup_maxpwrlevel = 0;
 	} else {
-		level = pwr->num_pwrlevels - 2;
+		level = pwr->num_pwrlevels - 1;
 	}
 
 	kgsl_pwrctrl_pwrlevel_change(device, level);

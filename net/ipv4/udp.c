@@ -1760,11 +1760,8 @@ static inline int udp4_csum_init(struct sk_buff *skb, struct udphdr *uh,
 		}
 	}
 
-	/* Note, we are only interested in != 0 or == 0, thus the
-	 * force to int.
-	 */
-	return (__force int)skb_checksum_init_zero_check(skb, proto, uh->check,
-							 inet_compute_pseudo);
+	return skb_checksum_init_zero_check(skb, proto, uh->check,
+					    inet_compute_pseudo);
 }
 
 /*

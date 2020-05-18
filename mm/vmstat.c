@@ -749,7 +749,6 @@ const char * const vmstat_text[] = {
 	"nr_shmem",
 	"nr_dirtied",
 	"nr_written",
-	"nr_ion_heap",
 	"nr_pages_scanned",
 
 #ifdef CONFIG_NUMA
@@ -1384,7 +1383,7 @@ static const struct file_operations proc_vmstat_file_operations = {
 #ifdef CONFIG_SMP
 static struct workqueue_struct *vmstat_wq;
 static DEFINE_PER_CPU(struct delayed_work, vmstat_work);
-int sysctl_stat_interval __read_mostly = 20 * HZ;
+int sysctl_stat_interval __read_mostly = HZ;
 static cpumask_var_t cpu_stat_off;
 
 static void vmstat_update(struct work_struct *w)

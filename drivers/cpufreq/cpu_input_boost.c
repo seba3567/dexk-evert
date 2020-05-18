@@ -211,12 +211,8 @@ static int cpu_notifier_cb(struct notifier_block *nb,
 		boost_freq = get_boost_freq(b, policy->cpu);
 		policy->min = min(policy->max, boost_freq);
 	} else {
-<<<<<<< HEAD
 		min_freq = get_min_freq(b, policy->cpu);
 		policy->min = max(policy->cpuinfo.min_freq, min_freq);
-=======
-		policy->min = CONFIG_REMOVE_INPUT_BOOST_FREQ_LP;
->>>>>>> e9a75e11db71... cpu_input_boost: add an option to choose a custom boost finish return freq for the LP cluster
 	}
 
 	return NOTIFY_OK;

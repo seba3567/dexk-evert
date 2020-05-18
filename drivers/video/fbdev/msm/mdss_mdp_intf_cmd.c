@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2018, 2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1198,7 +1198,7 @@ static int mdss_mdp_cmd_wait4readptr(struct mdss_mdp_cmd_ctx *ctx)
 {
 	int rc = 0;
 
-	rc = wait_event_interruptible_timeout(ctx->rdptr_waitq,
+	rc = wait_event_timeout(ctx->rdptr_waitq,
 			atomic_read(&ctx->rdptr_cnt) == 0,
 			KOFF_TIMEOUT);
 	if (rc <= 0) {
@@ -1231,12 +1231,11 @@ static int mdss_mdp_cmd_intf_callback(void *data, int event)
 			__func__, atomic_read(&ctx->rdptr_cnt), event);
 
 		/*
-		 * if we are going to suspended, just return
+		 * if we are going to suspended or pp split is not enabled,
+		 * just return
 		 */
-		if (ctx->intf_stopped) {
-			pr_debug("%s: Intf stopped\n", __func__);
+		if (ctx->intf_stopped || !is_pingpong_split(ctx->ctl->mfd))
 			return -EINVAL;
-		}
 		atomic_inc(&ctx->rdptr_cnt);
 
 		/* enable clks and rd_ptr interrupt */
@@ -2072,7 +2071,7 @@ static int __mdss_mdp_wait4pingpong(struct mdss_mdp_cmd_ctx *ctx)
 	s64 time;
 
 	do {
-		rc = wait_event_interruptible_timeout(ctx->pp_waitq,
+		rc = wait_event_timeout(ctx->pp_waitq,
 				atomic_read(&ctx->koff_cnt) == 0,
 				KOFF_TIMEOUT);
 		time = ktime_to_ms(ktime_get());
@@ -2103,7 +2102,7 @@ static int mdss_mdp_cmd_wait4pingpong(struct mdss_mdp_ctl *ctl, void *arg)
 	struct mdss_mdp_cmd_ctx *ctx;
 	struct mdss_panel_data *pdata;
 	unsigned long flags;
-	int rc = 0;
+	int rc = 0, te_irq;
 
 	ctx = (struct mdss_mdp_cmd_ctx *) ctl->intf_ctx[MASTER_CTX];
 	if (!ctx) {
@@ -2159,7 +2158,8 @@ static int mdss_mdp_cmd_wait4pingpong(struct mdss_mdp_ctl *ctl, void *arg)
 				atomic_read(&ctx->koff_cnt));
 
 		/* enable TE irq to check if it is coming from the panel */
-		panel_update_te_irq(pdata, true);
+		te_irq = gpio_to_irq(pdata->panel_te_gpio);
+		enable_irq(te_irq);
 
 		/* wait for 20ms to ensure we are getting the next TE */
 		usleep_range(20000, 20010);
@@ -2188,7 +2188,7 @@ static int mdss_mdp_cmd_wait4pingpong(struct mdss_mdp_ctl *ctl, void *arg)
 		}
 
 		/* disable te irq */
-		panel_update_te_irq(pdata, false);
+		disable_irq_nosync(te_irq);
 
 		ctx->pp_timeout_report_cnt++;
 		rc = -EPERM;
@@ -2976,11 +2976,6 @@ static void __mdss_mdp_kickoff(struct mdss_mdp_ctl *ctl,
 				spin_lock(&ctx->ctlstart_lock);
 			}
 		}
-
-		/* Don't let the CPU servicing the MDP IRQs enter deep idle */
-		if (!cancel_work_sync(&mdata->pm_unset_work))
-			pm_qos_update_request(&mdata->pm_irq_req, 100);
-		mdata->pm_irq_set = true;
 
 		/* SW Kickoff */
 		mdss_mdp_ctl_write(ctl, MDSS_MDP_REG_CTL_START, 1);

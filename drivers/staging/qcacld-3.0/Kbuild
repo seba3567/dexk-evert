@@ -708,6 +708,7 @@ DFS_INC :=	-I$(WLAN_ROOT)/$(DFS_INC_DIR) \
 
 DFS_OBJS :=	$(DFS_SRC_DIR)/dfs_bindetects.o \
 		$(DFS_SRC_DIR)/dfs.o \
+		$(DFS_SRC_DIR)/dfs_debug.o\
 		$(DFS_SRC_DIR)/dfs_fcc_bin5.o\
 		$(DFS_SRC_DIR)/dfs_init.o\
 		$(DFS_SRC_DIR)/dfs_misc.o\
@@ -716,10 +717,6 @@ DFS_OBJS :=	$(DFS_SRC_DIR)/dfs_bindetects.o \
 		$(DFS_SRC_DIR)/dfs_process_phyerr.o\
 		$(DFS_SRC_DIR)/dfs_process_radarevent.o\
 		$(DFS_SRC_DIR)/dfs_staggered.o
-
-ifdef DFS_DEBUG
-DFS_OBJS +=	$(DFS_SRC_DIR)/dfs_debug.o
-endif
 
 ############ SME ############
 SME_DIR :=	core/sme
@@ -1271,6 +1268,12 @@ CLEAN_FILES :=  $(HIF_CLEAN_FILES) \
 
 EXTRA_CFLAGS += $(INCS)
 
+# TODO: remove me b/62058353
+EXTRA_CFLAGS += \
+	-Wno-parentheses-equality \
+	-Wno-logical-not-parentheses \
+	-Wno-enum-conversion \
+
 CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DANI_LITTLE_BIT_ENDIAN \
 		-DDOT11F_LITTLE_ENDIAN_HOST \
@@ -1287,7 +1290,9 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DWLAN_AP_STA_CONCURRENCY \
 		-DFEATURE_WLAN_SCAN_PNO \
 		-DWLAN_FEATURE_PACKET_FILTERING \
+		-DWLAN_FEATURE_P2P_DEBUG \
 		-DWLAN_ENABLE_AGEIE_ON_SCAN_RESULTS \
+		-DWLANTL_DEBUG\
 		-DWLAN_NS_OFFLOAD \
 		-DWLAN_SOFTAP_VSTA_FEATURE \
 		-DWLAN_FEATURE_GTK_OFFLOAD \
@@ -1829,6 +1834,10 @@ ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CONFIG_HELIUMPLUS := y
 CONFIG_64BIT_PADDR := y
 CONFIG_FEATURE_TSO := y
+CONFIG_FEATURE_TSO_DEBUG := y
+ifneq ($(CONFIG_FORCE_ALLOC_FROM_DMA_ZONE), y)
+CONFIG_ENABLE_DEBUG_ADDRESS_MARKING := y
+endif
 ifeq ($(CONFIG_HELIUMPLUS),y)
 CDEFINES += -DHELIUMPLUS
 CDEFINES += -DAR900B
@@ -1954,6 +1963,16 @@ ifeq ($(call cc-option-yn, -Wheader-guard),y)
 EXTRA_CFLAGS += -Wheader-guard
 endif
 
+ifeq ($(cc-name),clang)
+EXTRA_CFLAGS += -Wno-error-enum-conversion
+EXTRA_CFLAGS += -Wno-error-pointer-bool-conversion
+EXTRA_CFLAGS += -Wno-error-typedef-redefinition
+EXTRA_CFLAGS += $(call cc-option,-Wno-error-address-of-packed-member)
+EXTRA_CFLAGS += $(call cc-option,-Wno-error-logical-not-parentheses)
+EXTRA_CFLAGS += -Wno-parentheses-equality
+EXTRA_CFLAGS += -Wframe-larger-than=3072
+endif
+
 # If the module name is not "wlan", then the define MULTI_IF_NAME to be the
 # same a the QCA CHIP name. The host driver will then append MULTI_IF_NAME to
 # any string that must be unique for all instances of the driver on the system.
@@ -1972,9 +1991,6 @@ endif
 ifdef WLAN_HDD_ADAPTER_MAGIC
 CDEFINES += -DWLAN_HDD_ADAPTER_MAGIC=$(WLAN_HDD_ADAPTER_MAGIC)
 endif
-
-ccflags-y += $(call cc-option, -g0)
-ccflags-y += $(call cc-option, -Os)
 
 # inject some build related information
 ifeq ($(CONFIG_BUILD_TAG), y)

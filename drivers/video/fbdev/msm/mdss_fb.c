@@ -1,7 +1,7 @@
 /*
  * Core MDSS framebuffer driver.
  *
- * Copyright (c) 2008-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2008-2019, The Linux Foundation. All rights reserved.
  * Copyright (C) 2007 Google Incorporated
  *
  * This software is licensed under the terms of the GNU General Public
@@ -46,11 +46,6 @@
 #include <linux/file.h>
 #include <linux/kthread.h>
 #include <linux/dma-buf.h>
-#include <linux/mdss_io_util.h>
-#include <linux/wakelock.h>
-#include <linux/cpu_input_boost.h>
-#include <linux/devfreq_boost.h>
-#include <linux/boost_control.h>
 #include <sync.h>
 #include <sw_sync.h>
 
@@ -2036,7 +2031,6 @@ static struct platform_driver mdss_fb_driver = {
 		.name = "mdss_fb",
 		.of_match_table = mdss_fb_dt_match,
 		.pm = &mdss_fb_pm_ops,
-		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 
@@ -2192,7 +2186,7 @@ static int mdss_fb_start_disp_thread(struct msm_fb_data_type *mfd)
 	mdss_fb_get_split(mfd);
 
 	atomic_set(&mfd->commits_pending, 0);
-	mfd->disp_thread = kthread_run_perf_critical(__mdss_fb_display_thread,
+	mfd->disp_thread = kthread_run(__mdss_fb_display_thread,
 				mfd, "mdss_fb%d", mfd->index);
 
 	if (IS_ERR(mfd->disp_thread)) {
@@ -3919,19 +3913,16 @@ static int mdss_fb_pan_display(struct fb_var_screeninfo *var,
 {
 	struct mdp_display_commit disp_commit;
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
-	struct mdss_data_type *mdata = mfd_to_mdata(mfd);
 
 	/*
-	 * Abort pan_display operations in following cases:
-	 * 1. during mode switch through mode sysfs node, it will trigger a
-	 *    pan_display after switch. This assumes that fb has been adjusted,
-	 *    however when using overlays we may not have the right size at this
-	 *    point, so it needs to go through PREPARE first.
-	 * 2. When the splash handoff is pending.
+	 * during mode switch through mode sysfs node, it will trigger a
+	 * pan_display after switch. This assumes that fb has been adjusted,
+	 * however when using overlays we may not have the right size at this
+	 * point, so it needs to go through PREPARE first. Abort pan_display
+	 * operations until that happens
 	 */
-	if ((mfd->switch_state != MDSS_MDP_NO_UPDATE_REQUESTED) ||
-		(mdss_fb_is_hdmi_primary(mfd) && mdata->handoff_pending)) {
-		pr_debug("fb%d: pan_display skipped during switch or handoff\n",
+	if (mfd->switch_state != MDSS_MDP_NO_UPDATE_REQUESTED) {
+		pr_debug("fb%d: pan_display skipped during switch\n",
 				mfd->index);
 		return 0;
 	}
@@ -4199,7 +4190,7 @@ static int __mdss_fb_display_thread(void *data)
 				mfd->index);
 
 	while (1) {
-		wait_event_interruptible(mfd->commit_wait_q,
+		wait_event(mfd->commit_wait_q,
 				(atomic_read(&mfd->commits_pending) ||
 				 kthread_should_stop()));
 
@@ -4490,23 +4481,17 @@ static int mdss_fb_set_par(struct fb_info *info)
 		mfd->fbi->fix.smem_len = PAGE_ALIGN(mfd->fbi->fix.line_length *
 				mfd->fbi->var.yres) * mfd->fb_page;
 
-	old_format = mfd->panel_info->out_format;
-	mfd->panel_info->out_format =
-			mdss_grayscale_to_mdp_format(var->grayscale);
-	if (!IS_ERR_VALUE(mfd->panel_info->out_format)) {
+	old_format = mdss_grayscale_to_mdp_format(var->grayscale);
+	if (!IS_ERR_VALUE(old_format)) {
 		if (old_format != mfd->panel_info->out_format)
 			mfd->panel_reconfig = true;
 	}
-
-	if (mdss_fb_is_hdmi_primary(mfd) && mfd->panel_reconfig)
-		mfd->force_null_commit = true;
 
 	if (mfd->panel_reconfig || (mfd->fb_imgType != old_imgType)) {
 		mdss_fb_blank_sub(FB_BLANK_POWERDOWN, info, mfd->op_enable);
 		mdss_fb_var_to_panelinfo(var, mfd->panel_info);
 		mdss_fb_blank_sub(FB_BLANK_UNBLANK, info, mfd->op_enable);
 		mfd->panel_reconfig = false;
-		mfd->force_null_commit = false;
 	}
 
 	return ret;
@@ -4977,63 +4962,96 @@ err:
 }
 
 static int __mdss_fb_copy_destscaler_data(struct fb_info *info,
-		struct mdp_layer_commit *commit,
-		struct mdp_destination_scaler_data *ds_data,
-		struct mdp_scale_data_v2 *scale_data)
+		struct mdp_layer_commit *commit)
 {
 	int    i = 0;
 	int    ret = 0;
+	u32    data_size;
 	struct mdp_destination_scaler_data __user *ds_data_user;
+	struct mdp_destination_scaler_data *ds_data = NULL;
 	void __user *scale_data_user;
+	struct mdp_scale_data_v2 *scale_data = NULL;
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
 	struct mdss_data_type *mdata;
 
 	if (!mfd || !mfd->mdp.private1) {
 		pr_err("mfd is NULL or operation not permitted\n");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 
 	mdata = mfd_to_mdata(mfd);
 	if (!mdata) {
 		pr_err("mdata is NULL or not initialized\n");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 
 	if (commit->commit_v1.dest_scaler_cnt >
 			mdata->scaler_off->ndest_scalers) {
 		pr_err("Commit destination scaler cnt larger than HW setting, commit cnt=%d\n",
 				commit->commit_v1.dest_scaler_cnt);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 
 	ds_data_user = (struct mdp_destination_scaler_data *)
 		commit->commit_v1.dest_scaler;
-	ret = copy_from_user(ds_data, ds_data_user,
-		commit->commit_v1.dest_scaler_cnt * sizeof(*ds_data));
+	data_size = commit->commit_v1.dest_scaler_cnt *
+		sizeof(struct mdp_destination_scaler_data);
+	ds_data = kzalloc(data_size, GFP_KERNEL);
+	if (!ds_data) {
+		ret = -ENOMEM;
+		goto err;
+	}
+
+	ret = copy_from_user(ds_data, ds_data_user, data_size);
 	if (ret) {
 		pr_err("dest scaler data copy from user failed\n");
-		return ret;
+		goto err;
 	}
 
 	commit->commit_v1.dest_scaler = ds_data;
 
 	for (i = 0; i < commit->commit_v1.dest_scaler_cnt; i++) {
-		if (!ds_data[i].scale)
-			continue;
+		scale_data = NULL;
 
-		scale_data_user = to_user_ptr(ds_data[i].scale);
-		ds_data[i].scale = to_user_u64(&scale_data[i]);
-		if (ds_data[i].flags & (MDP_DESTSCALER_SCALE_UPDATE |
-					MDP_DESTSCALER_ENHANCER_UPDATE)) {
-			ret = copy_from_user(scale_data + i, scale_data_user,
-					     sizeof(*scale_data));
+		if (ds_data[i].scale) {
+			scale_data_user = to_user_ptr(ds_data[i].scale);
+			data_size = sizeof(struct mdp_scale_data_v2);
+
+			scale_data = kzalloc(data_size, GFP_KERNEL);
+			if (!scale_data) {
+				ds_data[i].scale = 0;
+				ret = -ENOMEM;
+				goto err;
+			}
+
+			ds_data[i].scale = to_user_u64(scale_data);
+		}
+
+		if (scale_data && (ds_data[i].flags &
+					(MDP_DESTSCALER_SCALE_UPDATE |
+					MDP_DESTSCALER_ENHANCER_UPDATE))) {
+			ret = copy_from_user(scale_data, scale_data_user,
+					data_size);
 			if (ret) {
 				pr_err("scale data copy from user failed\n");
-				return ret;
+				kfree(scale_data);
+				goto err;
 			}
-		} else {
-			memset(scale_data + i, 0, sizeof(*scale_data));
 		}
+	}
+
+	return ret;
+
+err:
+	if (ds_data) {
+		for (i--; i >= 0; i--) {
+			scale_data = to_user_ptr(ds_data[i].scale);
+			kfree(scale_data);
+		}
+		kfree(ds_data);
 	}
 
 	return ret;
@@ -5049,12 +5067,11 @@ static int mdss_fb_atomic_commit_ioctl(struct fb_info *info,
 	struct mdp_input_layer __user *input_layer_list;
 	struct mdp_output_layer *output_layer = NULL;
 	struct mdp_output_layer __user *output_layer_user;
+	struct mdp_destination_scaler_data *ds_data = NULL;
 	struct mdp_destination_scaler_data __user *ds_data_user;
 	struct msm_fb_data_type *mfd;
 	struct mdss_overlay_private *mdp5_data = NULL;
 	struct mdss_data_type *mdata;
-	struct mdp_destination_scaler_data ds_data[2];
-	struct mdp_scale_data_v2 scale_data[2];
 
 	ret = copy_from_user(&commit, argp, sizeof(struct mdp_layer_commit));
 	if (ret) {
@@ -5164,14 +5181,12 @@ static int mdss_fb_atomic_commit_ioctl(struct fb_info *info,
 			ret = -EPERM;
 			goto err;
 		}
-
-		ret = __mdss_fb_copy_destscaler_data(info, &commit, ds_data,
-						     scale_data);
-
+		ret = __mdss_fb_copy_destscaler_data(info, &commit);
 		if (ret) {
 			pr_err("copy dest scaler failed\n");
 			goto err;
 		}
+		ds_data = commit.commit_v1.dest_scaler;
 	}
 
 	ATRACE_BEGIN("ATOMIC_COMMIT");
@@ -5216,6 +5231,11 @@ err:
 	}
 	kfree(layer_list);
 	kfree(output_layer);
+	if (ds_data) {
+		for (i = 0; i < commit.commit_v1.dest_scaler_cnt; i++)
+			kfree(to_user_ptr(ds_data[i].scale));
+		kfree(ds_data);
+	}
 
 	return ret;
 }
@@ -5446,16 +5466,6 @@ int mdss_fb_do_ioctl(struct fb_info *info, unsigned int cmd,
 		ret = mdss_fb_mode_switch(mfd, dsi_mode);
 		break;
 	case MSMFB_ATOMIC_COMMIT:
- 		if (time_before(jiffies, last_input_time + msecs_to_jiffies(1000))) {
-		#if CONFIG_BOOST_CONTROL
-		if(enable_fb_boost){
-		#endif
-		cpu_input_boost_kick();
-		devfreq_boost_kick(DEVFREQ_MSM_CPUBW);
-		#if CONFIG_BOOST_CONTROL
-		}
-		#endif
-		}
 		ret = mdss_fb_atomic_commit_ioctl(info, argp, file);
 		break;
 

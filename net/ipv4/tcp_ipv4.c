@@ -1655,8 +1655,6 @@ process:
 		}
 		if (nsk == sk) {
 			reqsk_put(req);
-		} else if (tcp_filter(sk, skb)) {
-			goto discard_and_relse;
 		} else if (tcp_child_process(sk, nsk, skb)) {
 			tcp_v4_send_reset(nsk, skb);
 			goto discard_and_relse;
@@ -2433,7 +2431,7 @@ static int __net_init tcp_sk_init(struct net *net)
 		*per_cpu_ptr(net->ipv4.tcp_sk, cpu) = sk;
 	}
 
-	net->ipv4.sysctl_tcp_ecn = 1;
+	net->ipv4.sysctl_tcp_ecn = 2;
 	net->ipv4.sysctl_tcp_ecn_fallback = 1;
 
 	net->ipv4.sysctl_tcp_base_mss = TCP_BASE_MSS;

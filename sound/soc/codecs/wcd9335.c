@@ -94,7 +94,7 @@
 	(TASHA_CPE_SS_ERR_STATUS_WDOG_BITE | \
 	 TASHA_CPE_SS_ERR_STATUS_MEM_ACCESS)
 
-#define SLIM_BW_CLK_GEAR_10 24600000
+#define SLIM_BW_CLK_GEAR_9 6200000
 #define SLIM_BW_UNVOTE 0
 
 #define CPE_FLL_CLK_75MHZ 75000000
@@ -1989,7 +1989,7 @@ static void tasha_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 		{4, 0, 4, 0x08, 0x14, 0x18}, /* < 32ohm */
 		{2, 0, 3, 0x18, 0x7C, 0x90}, /* 32ohm < Z < 400ohm */
 		{1, 4, 5, 0x18, 0x7C, 0x90}, /* 400ohm < Z < 1200ohm */
-		{2, 6, 7, 0x18, 0x7C, 0x90}, /* >1200ohm */
+		{1, 6, 7, 0x18, 0x7C, 0x90}, /* >1200ohm */
 	};
 	struct tasha_mbhc_zdet_param *zdet_param_ptr = NULL;
 	s16 d1_a[][4] = {
@@ -4357,8 +4357,7 @@ static int tasha_codec_enable_spk_anc(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		ret = tasha_codec_enable_anc(w, kcontrol, event);
-		queue_delayed_work(system_power_efficient_wq,
-				      &tasha->spk_anc_dwork.dwork,
+		schedule_delayed_work(&tasha->spk_anc_dwork.dwork,
 				      msecs_to_jiffies(spk_anc_en_delay));
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -5957,12 +5956,11 @@ static int tasha_codec_enable_dec(struct snd_soc_dapm_widget *w,
 			snd_soc_write(codec, WCD9335_MBHC_ZDET_RAMP_CTL, 0x03);
 		}
 		/* schedule work queue to Remove Mute */
-		queue_delayed_work(system_power_efficient_wq,
-				      &tasha->tx_mute_dwork[decimator].dwork,
+		schedule_delayed_work(&tasha->tx_mute_dwork[decimator].dwork,
 				      msecs_to_jiffies(tx_unmute_delay));
 		if (tasha->tx_hpf_work[decimator].hpf_cut_off_freq !=
 							CF_MIN_3DB_150HZ)
-			queue_delayed_work(system_power_efficient_wq,
+			schedule_delayed_work(
 					&tasha->tx_hpf_work[decimator].dwork,
 					msecs_to_jiffies(300));
 		/* apply gain after decimator is enabled */
@@ -12157,9 +12155,8 @@ static int tasha_dig_core_power_collapse(struct tasha_priv *tasha,
 
 	if (req_state == POWER_COLLAPSE) {
 		if (tasha->power_active_ref == 0) {
-			queue_delayed_work(system_power_efficient_wq,
-					&tasha->power_gate_work,
-					msecs_to_jiffies(dig_core_collapse_timer * 1000));
+			schedule_delayed_work(&tasha->power_gate_work,
+			msecs_to_jiffies(dig_core_collapse_timer * 1000));
 		}
 	} else if (req_state == POWER_RESUME) {
 		if (tasha->power_active_ref == 1) {
@@ -13328,7 +13325,7 @@ static int tasha_codec_vote_max_bw(struct snd_soc_codec *codec,
 	if (vote) {
 		tasha->ref_count++;
 		if (tasha->ref_count == 1) {
-			bw_ops = SLIM_BW_CLK_GEAR_10;
+			bw_ops = SLIM_BW_CLK_GEAR_9;
 			tasha_codec_slim_reserve_bw(codec,
 				bw_ops, true);
 		}

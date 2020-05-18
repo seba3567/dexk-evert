@@ -289,20 +289,6 @@ config INPUT_BOOST_FREQ_PERF
 	help
 	  Input boost frequency for the performance CPU cluster.
 
-<<<<<<< HEAD
-config MAX_BOOST_FREQ_LP
-	int "Low-power cluster max-boost freq"
-	default "0"
-	help
-	  Max-boost frequency for the low-power CPU cluster.
-
-config MAX_BOOST_FREQ_PERF
-	int "Performance cluster max-boost freq"
-	default "0"
-	help
-	  Max-boost frequency for the performance CPU cluster.
-
-=======
 config REMOVE_INPUT_BOOST_FREQ_LP
 	int "Low-power cluster return frequency"
 	default "0"
@@ -312,7 +298,17 @@ config REMOVE_INPUT_BOOST_FREQ_LP
 	  use cpuinfo.min_freq. In case the device has some kind of quirk
 	  of using a higher than cpuinfo.min_freq (e.g. OnePlus 5/5T/6)
 	  this frequency will be used.
->>>>>>> e9a75e11db71... cpu_input_boost: add an option to choose a custom boost finish return freq for the LP cluster
+
+config REMOVE_INPUT_BOOST_FREQ_PERF
+	int "Performance cluster return frequency"
+	default "0"
+	help
+	  This is the frequency the performance cluster will fallback to
+	  once the boost is over. The default 0 will make the policy
+	  use cpuinfo.min_freq. In case the device has some kind of quirk
+	  of using a higher than cpuinfo.min_freq (e.g. OnePlus 5/5T/6)
+	  this frequency will be used.
+
 endif
 
 comment "CPU frequency scaling drivers"
@@ -329,6 +325,12 @@ config CPUFREQ_DT
 	  systems which share clock and voltage across all CPUs.
 
 	  If in doubt, say N.
+
+config ALUCARD_HOTPLUG
+	bool "Enable alucard-hotplug cpu hotplug driver"
+    default n
+	help
+	  Generic Alucard-hotplug cpu hotplug driver for ARM SOCs.
 
 if X86
 source "drivers/cpufreq/Kconfig.x86"
@@ -434,27 +436,6 @@ config QORIQ_CPUFREQ
 	help
 	  This adds the CPUFreq driver support for Freescale QorIQ SoCs
 	  which are capable of changing the CPU's frequency dynamically.
-
-endif
-
-config BOOST_CONTROL
-	bool "boost control"
-	default y
-	help
-	  A simple driver to control boosts in userspace.
-
-if BOOST_CONTROL
-config APP_LAUNCH_BOOST_MS
-	int "app launch boost time"
-	default "0"
-	help
-	  app launch boost time in ms.
-
-config LMK_BOOST_MS
-	int "lmk boost time"
-	default "100"
-	help
-	  lmk boost time in ms.
 
 endif
 endmenu

@@ -83,7 +83,7 @@ static unsigned int sched_nr_latency = 8;
  * After fork, child runs first. If set to 0 (default) then
  * parent will (try to) run first.
  */
-unsigned int sysctl_sched_child_runs_first __read_mostly = 1;
+unsigned int sysctl_sched_child_runs_first __read_mostly;
 
 /*
  * SCHED_OTHER wake-up granularity.
@@ -93,8 +93,8 @@ unsigned int sysctl_sched_child_runs_first __read_mostly = 1;
  * and reduces their over-scheduling. Synchronous workloads will still
  * have immediate wakeup/sleep latencies.
  */
-unsigned int sysctl_sched_wakeup_granularity = 2000000UL;
-unsigned int normalized_sysctl_sched_wakeup_granularity = 2000000UL;
+unsigned int sysctl_sched_wakeup_granularity = 1000000UL;
+unsigned int normalized_sysctl_sched_wakeup_granularity = 1000000UL;
 
 const_debug unsigned int sysctl_sched_migration_cost = 500000UL;
 
@@ -8507,7 +8507,7 @@ static bool yield_to_task_fair(struct rq *rq, struct task_struct *p, bool preemp
  *
  * The adjacency matrix of the resulting graph is given by:
  *
- *             log_2 n
+ *             log_2 n     
  *   A_i,j = \Union     (i % 2^k == 0) && i / 2^(k+1) == j / 2^(k+1)  (6)
  *             k = 0
  *
@@ -8553,7 +8553,7 @@ static bool yield_to_task_fair(struct rq *rq, struct task_struct *p, bool preemp
  *
  * [XXX write more on how we solve this.. _after_ merging pjt's patches that
  *      rewrite all of this once again.]
- */
+ */ 
 
 static unsigned long __read_mostly max_load_balance_interval = HZ/10;
 
@@ -8727,10 +8727,10 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 		 * our sched_group. We may want to revisit it if we couldn't
 		 * meet load balance goals by pulling other tasks on src_cpu.
 		 *
-		 * Avoid computing new_dst_cpu for NEWLY_IDLE or if we have
-		 * already computed one in current iteration.
+		 * Also avoid computing new_dst_cpu if we have already computed
+		 * one in current iteration.
 		 */
-		if (env->idle == CPU_NEWLY_IDLE || (env->flags & LBF_DST_PINNED))
+		if (!env->dst_grpmask || (env->flags & LBF_DST_PINNED))
 			return 0;
 
 		/* Prevent to re-select dst_cpu via env's cpus */
@@ -9314,9 +9314,16 @@ static void update_cpu_capacity(struct sched_domain *sd, int cpu)
 	    (max_capacity < capacity)) {
 		mcc->val = capacity;
 		mcc->cpu = cpu;
+#ifdef CONFIG_SCHED_DEBUG
+		raw_spin_unlock_irqrestore(&mcc->lock, flags);
+		printk_deferred(KERN_INFO "CPU%d: update max cpu_capacity %lu\n",
+				cpu, capacity);
+		goto skip_unlock;
+#endif
 	}
 	raw_spin_unlock_irqrestore(&mcc->lock, flags);
 
+skip_unlock: __attribute__ ((unused));
 	capacity *= scale_rt_capacity(cpu);
 	capacity >>= SCHED_CAPACITY_SHIFT;
 
@@ -9386,7 +9393,7 @@ void update_group_capacity(struct sched_domain *sd, int cpu)
 		/*
 		 * !SD_OVERLAP domains can assume that child groups
 		 * span the current group.
-		 */
+		 */ 
 
 		group = child->groups;
 		do {
@@ -10496,7 +10503,14 @@ static int load_balance(int this_cpu, struct rq *this_rq,
 		.boost_policy		= sched_boost_policy(),
 	};
 
-	cpumask_and(cpus, sched_domain_span(sd), cpu_active_mask);
+	/*
+	 * For NEWLY_IDLE load_balancing, we don't need to consider
+	 * other cpus in our group
+	 */
+	if (idle == CPU_NEWLY_IDLE)
+		env.dst_grpmask = NULL;
+
+	cpumask_copy(cpus, cpu_active_mask);
 
 	schedstat_inc(sd, lb_count[idle]);
 
@@ -10630,15 +10644,7 @@ more_balance:
 		/* All tasks on this runqueue were pinned by CPU affinity */
 		if (unlikely(env.flags & LBF_ALL_PINNED)) {
 			cpumask_clear_cpu(cpu_of(busiest), cpus);
-			/*
-			 * Attempting to continue load balancing at the current
-			 * sched_domain level only makes sense if there are
-			 * active CPUs remaining as possible busiest CPUs to
-			 * pull load from which are not contained within the
-			 * destination group that is receiving any migrated
-			 * load.
-			 */
-			if (!cpumask_subset(cpus, env.dst_grpmask)) {
+			if (!cpumask_empty(cpus)) {
 				env.loop = 0;
 				env.loop_break = sched_nr_migrate_break;
 				goto redo;
@@ -10950,13 +10956,6 @@ static int active_load_balance_cpu_stop(void *data)
 		.flags			= 0,
 		.loop			= 0,
 		.boost_policy		= sched_boost_policy(),
-		/*
-		 * can_migrate_task() doesn't need to compute new_dst_cpu
-		 * for active balancing. Since we have CPU_IDLE, but no
-		 * @dst_grpmask we need to make that test go away with lying
-		 * about DST_PINNED.
-		 */
-		.flags		= LBF_DST_PINNED,
 	};
 	bool moved = false;
 

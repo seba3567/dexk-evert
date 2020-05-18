@@ -67,8 +67,7 @@
 
 extern int extra_free_kbytes;
 
-static uint32_t lowmem_debug_level = 0;
-
+static uint32_t lowmem_debug_level = 1;
 static short lowmem_adj[6] = {
 	0,
 	1,
@@ -316,7 +315,6 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 	if (pressure >= 95) {
 		other_file = global_page_state(NR_FILE_PAGES) + zcache_pages() -
 			global_page_state(NR_SHMEM) -
-			global_page_state(NR_UNEVICTABLE) -
 			total_swapcache_pages();
 		other_free = global_page_state(NR_FREE_PAGES);
 
@@ -330,7 +328,6 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 
 		other_file = global_page_state(NR_FILE_PAGES) + zcache_pages() -
 			global_page_state(NR_SHMEM) -
-			global_page_state(NR_UNEVICTABLE) -
 			total_swapcache_pages();
 
 		other_free = global_page_state(NR_FREE_PAGES);
@@ -343,7 +340,6 @@ static int lmk_vmpressure_notifier(struct notifier_block *nb,
 	} else if (atomic_read(&shift_adj)) {
 		other_file = global_page_state(NR_FILE_PAGES) + zcache_pages() -
 			global_page_state(NR_SHMEM) -
-			global_page_state(NR_UNEVICTABLE) -
 			total_swapcache_pages();
 		other_free = global_page_state(NR_FREE_PAGES);
 

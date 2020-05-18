@@ -1,3 +1,4 @@
+
 /*
  * Universal Flash Storage Host controller driver Core
  *
@@ -368,7 +369,7 @@ static int ufshcd_probe_hba(struct ufs_hba *hba);
 static int ufshcd_enable_clocks(struct ufs_hba *hba);
 static int ufshcd_disable_clocks(struct ufs_hba *hba,
 				 bool is_gating_context);
-static int ufshcd_disable_clocks_keep_link_active(struct ufs_hba *hba,
+static int ufshcd_disable_clocks_skip_ref_clk(struct ufs_hba *hba,
 					      bool is_gating_context);
 static void ufshcd_hold_all(struct ufs_hba *hba);
 static void ufshcd_release_all(struct ufs_hba *hba);
@@ -1382,7 +1383,7 @@ out:
  * Returns 0 if successful
  * Returns < 0 for any other errors
  */
-int ufshcd_scale_clks(struct ufs_hba *hba, bool scale_up)
+static int ufshcd_scale_clks(struct ufs_hba *hba, bool scale_up)
 {
 	int ret = 0;
 
@@ -1480,16 +1481,10 @@ start:
 		 */
 		if (ufshcd_can_hibern8_during_gating(hba) &&
 		    ufshcd_is_link_hibern8(hba)) {
-			if (async) {
-				rc = -EAGAIN;
-				hba->clk_gating.active_reqs--;
-				break;
-			}
 			spin_unlock_irqrestore(hba->host->host_lock, flags);
 			flush_work(&hba->clk_gating.ungate_work);
 			spin_lock_irqsave(hba->host->host_lock, flags);
-			if (hba->ufshcd_state == UFSHCD_STATE_OPERATIONAL)
-				goto start;
+			goto start;
 		}
 		break;
 	case REQ_CLKS_OFF:
@@ -1592,16 +1587,15 @@ static void ufshcd_gate_work(struct work_struct *work)
 	}
 
 	/*
-	 * If auto hibern8 is supported and enabled then the link will already
+	 * If auto hibern8 is supported then the link will already
 	 * be in hibern8 state and the ref clock can be gated.
 	 */
-	if ((((ufshcd_is_auto_hibern8_supported(hba) &&
-	       hba->hibern8_on_idle.is_enabled)) ||
+	if ((ufshcd_is_auto_hibern8_supported(hba) ||
 	     !ufshcd_is_link_active(hba)) && !hba->no_ref_clk_gating)
 		ufshcd_disable_clocks(hba, true);
 	else
 		/* If link is active, device ref_clk can't be switched off */
-		ufshcd_disable_clocks_keep_link_active(hba, true);
+		ufshcd_disable_clocks_skip_ref_clk(hba, true);
 
 	/* Put the host controller in low power mode if possible */
 	ufshcd_hba_vreg_set_lpm(hba);
@@ -1830,8 +1824,8 @@ static void ufshcd_init_clk_gating(struct ufs_hba *hba)
 	gating->delay_ms_pwr_save = UFSHCD_CLK_GATING_DELAY_MS_PWR_SAVE;
 	gating->delay_ms_perf = UFSHCD_CLK_GATING_DELAY_MS_PERF;
 
-	/* start with power-save mode */
-	gating->delay_ms = gating->delay_ms_pwr_save;
+	/* start with performance mode */
+	gating->delay_ms = gating->delay_ms_perf;
 
 	if (!ufshcd_is_clkscaling_supported(hba))
 		goto scaling_not_supported;
@@ -1927,8 +1921,28 @@ static int ufshcd_hibern8_hold(struct ufs_hba *hba, bool async)
 	}
 
 start:
-	switch (hba->hibern8_on_idle.state) {
-	case HIBERN8_EXITED:
+	switch (hba->clk_gating.state) {
+	case CLKS_ON:
+		/*
+		 * Wait for the ungate work to complete if in progress.
+		 * Though the clocks may be in ON state, the link could
+		 * still be in hibner8 state if hibern8 is allowed
+		 * during clock gating.
+		 * Make sure we exit hibern8 state also in addition to
+		 * clocks being ON.
+		 */
+		if (ufshcd_can_hibern8_during_gating(hba) &&
+		    ufshcd_is_link_hibern8(hba)) {
+			if (async) {
+				rc = -EAGAIN;
+				hba->clk_gating.active_reqs--;
+				break;
+			}
+			spin_unlock_irqrestore(hba->host->host_lock, flags);
+			flush_work(&hba->clk_gating.ungate_work);
+			spin_lock_irqsave(hba->host->host_lock, flags);
+			goto start;
+		}
 		break;
 	case REQ_HIBERN8_ENTER:
 		if (cancel_delayed_work(&hba->hibern8_on_idle.enter_work)) {
@@ -2083,7 +2097,6 @@ static void __ufshcd_set_auto_hibern8_timer(struct ufs_hba *hba,
 	/* wait for all the outstanding requests to finish */
 	ufshcd_wait_for_doorbell_clr(hba, U64_MAX);
 	ufshcd_set_auto_hibern8_timer(hba, delay_ms);
-	hba->hibern8_on_idle.is_enabled = !!delay_ms;
 	up_write(&hba->lock);
 	ufshcd_scsi_unblock_requests(hba);
 	ufshcd_release_all(hba);
@@ -2198,7 +2211,7 @@ static ssize_t ufshcd_hibern8_on_idle_enable_store(struct device *dev,
 	if (ufshcd_is_auto_hibern8_supported(hba)) {
 		__ufshcd_set_auto_hibern8_timer(hba,
 			value ? hba->hibern8_on_idle.delay_ms : value);
-		goto out;
+		goto update;
 	}
 
 	if (value) {
@@ -2214,6 +2227,7 @@ static ssize_t ufshcd_hibern8_on_idle_enable_store(struct device *dev,
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 	}
 
+update:
 	hba->hibern8_on_idle.is_enabled = value;
 out:
 	return count;
@@ -5513,8 +5527,7 @@ static irqreturn_t ufshcd_uic_cmd_compl(struct ufs_hba *hba, u32 intr_status)
 		if (hba->uic_async_done) {
 			complete(hba->uic_async_done);
 			retval = IRQ_HANDLED;
-		} else if (ufshcd_is_auto_hibern8_supported(hba) &&
-			   hba->hibern8_on_idle.is_enabled) {
+		} else if (ufshcd_is_auto_hibern8_supported(hba)) {
 			/*
 			 * If uic_async_done flag is not set then this
 			 * is an Auto hibern8 err interrupt.
@@ -6149,8 +6162,7 @@ static void ufshcd_err_handler(struct work_struct *work)
 	 * process of gating when the err handler runs.
 	 */
 	if (unlikely((hba->clk_gating.state != CLKS_ON) &&
-	    ufshcd_is_auto_hibern8_supported(hba) &&
-	    hba->hibern8_on_idle.is_enabled)) {
+	    ufshcd_is_auto_hibern8_supported(hba))) {
 		spin_unlock_irqrestore(hba->host->host_lock, flags);
 		hba->ufs_stats.clk_hold.ctx = ERR_HNDLR_WORK;
 		ufshcd_hold(hba, false);
@@ -7264,11 +7276,9 @@ static void ufshcd_init_icc_levels(struct ufs_hba *hba)
  * will take effect only when its sent to "UFS device" well known logical unit
  * hence we require the scsi_device instance to represent this logical unit in
  * order for the UFS host driver to send the SSU command for power management.
-
  * We also require the scsi_device instance for "RPMB" (Replay Protected Memory
  * Block) LU so user space process can control this LU. User space may also
  * want to have access to BOOT LU.
-
  * This function adds scsi device instances for each of all well known LUs
  * (except "REPORT LUNS" LU).
  *
@@ -7644,8 +7654,7 @@ static int ufshcd_probe_hba(struct ufs_hba *hba)
 	 * Enable auto hibern8 if supported, after full host and
 	 * device initialization.
 	 */
-	if (ufshcd_is_auto_hibern8_supported(hba) &&
-	    hba->hibern8_on_idle.is_enabled)
+	if (ufshcd_is_auto_hibern8_supported(hba))
 		ufshcd_set_auto_hibern8_timer(hba,
 				      hba->hibern8_on_idle.delay_ms);
 out:
@@ -8302,7 +8311,7 @@ out:
 }
 
 static int ufshcd_setup_clocks(struct ufs_hba *hba, bool on,
-			       bool keep_link_active, bool is_gating_context)
+			       bool skip_ref_clk, bool is_gating_context)
 {
 	int ret = 0;
 	struct ufs_clk_info *clki;
@@ -8334,13 +8343,7 @@ static int ufshcd_setup_clocks(struct ufs_hba *hba, bool on,
 
 	list_for_each_entry(clki, head, list) {
 		if (!IS_ERR_OR_NULL(clki->clk)) {
-			/*
-			 * To keep link active, both device ref clock and unipro
-			 * clock should be kept ON.
-			 */
-			if (keep_link_active &&
-			    (!strcmp(clki->name, "ref_clk") ||
-			     !strcmp(clki->name, "core_clk_unipro")))
+			if (skip_ref_clk && !strcmp(clki->name, "ref_clk"))
 				continue;
 
 			clk_state_changed = on ^ clki->enabled;
@@ -8415,7 +8418,7 @@ static int ufshcd_disable_clocks(struct ufs_hba *hba,
 	return  ufshcd_setup_clocks(hba, false, false, is_gating_context);
 }
 
-static int ufshcd_disable_clocks_keep_link_active(struct ufs_hba *hba,
+static int ufshcd_disable_clocks_skip_ref_clk(struct ufs_hba *hba,
 					      bool is_gating_context)
 {
 	return  ufshcd_setup_clocks(hba, false, true, is_gating_context);
@@ -8910,11 +8913,8 @@ disable_clks:
 	if (!ufshcd_is_link_active(hba))
 		ret = ufshcd_disable_clocks(hba, false);
 	else
-		/*
-		 * If link is active, device ref_clk and unipro clock can't be
-		 * switched off.
-		 */
-		ret = ufshcd_disable_clocks_keep_link_active(hba, false);
+		/* If link is active, device ref_clk can't be switched off */
+		ret = ufshcd_disable_clocks_skip_ref_clk(hba, false);
 	if (ret)
 		goto set_link_active;
 
@@ -9830,8 +9830,7 @@ static int ufshcd_devfreq_scale(struct ufs_hba *hba, bool scale_up)
 	 * hibern8 manually, this is to avoid auto hibern8
 	 * racing during clock frequency scaling sequence.
 	 */
-	if (ufshcd_is_auto_hibern8_supported(hba) &&
-	    hba->hibern8_on_idle.is_enabled) {
+	if (ufshcd_is_auto_hibern8_supported(hba)) {
 		ret = ufshcd_uic_hibern8_enter(hba);
 		if (ret)
 			/* link will be bad state so no need to scale_up_gear */
@@ -9842,8 +9841,7 @@ static int ufshcd_devfreq_scale(struct ufs_hba *hba, bool scale_up)
 	if (ret)
 		goto scale_up_gear;
 
-	if (ufshcd_is_auto_hibern8_supported(hba) &&
-	    hba->hibern8_on_idle.is_enabled) {
+	if (ufshcd_is_auto_hibern8_supported(hba)) {
 		ret = ufshcd_uic_hibern8_exit(hba);
 		if (ret)
 			/* link will be bad state so no need to scale_up_gear */

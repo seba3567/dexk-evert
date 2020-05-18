@@ -99,7 +99,7 @@ static inline void mmc_cmdq_ready_wait(struct mmc_host *host,
 	 * 6. free tag available to process the new request.
 	 *    (This must be the last condtion to check)
 	 */
-	wait_event_interruptible(ctx->wait, kthread_should_stop()
+	wait_event(ctx->wait, kthread_should_stop()
 		|| (mmc_peek_request(mq) &&
 		!((mq->cmdq_req_peeked->cmd_flags & (REQ_FLUSH | REQ_DISCARD))
 		  && test_bit(CMDQ_STATE_DCMD_ACTIVE, &ctx->curr_state))
@@ -117,12 +117,6 @@ static int mmc_cmdq_thread(void *d)
 	struct mmc_queue *mq = d;
 	struct mmc_card *card = mq->card;
 	struct mmc_host *host = card->host;
-
-	struct sched_param scheduler_params = {0};
-
-	scheduler_params.sched_priority = 1;
-
-	sched_setscheduler(current, SCHED_FIFO, &scheduler_params);
 
 	current->flags |= PF_MEMALLOC;
 	if (card->host->wakeup_on_idle)

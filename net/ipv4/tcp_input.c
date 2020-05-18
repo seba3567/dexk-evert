@@ -220,15 +220,8 @@ static void tcp_ecn_queue_cwr(struct tcp_sock *tp)
 
 static void tcp_ecn_accept_cwr(struct tcp_sock *tp, const struct sk_buff *skb)
 {
-	if (tcp_hdr(skb)->cwr) {
+	if (tcp_hdr(skb)->cwr)
 		tp->ecn_flags &= ~TCP_ECN_DEMAND_CWR;
-
-		/* If the sender is telling us it has entered CWR, then its
-		 * cwnd may be very low (even just 1 packet), so we should ACK
-		 * immediately.
-		 */
-		tcp_enter_quickack_mode((struct sock *)tp, 2);
-	}
 }
 
 static void tcp_ecn_withdraw_cwr(struct tcp_sock *tp)
@@ -3286,12 +3279,8 @@ static int tcp_clean_rtx_queue(struct sock *sk, int prior_fackets,
 		tcp_rearm_rto(sk);
 	}
 
-	if (icsk->icsk_ca_ops->pkts_acked) {
-		struct ack_sample sample = { .pkts_acked = pkts_acked,
-					     .rtt_us = ca_rtt_us };
-
-		icsk->icsk_ca_ops->pkts_acked(sk, &sample);
-	}
+	if (icsk->icsk_ca_ops->pkts_acked)
+		icsk->icsk_ca_ops->pkts_acked(sk, pkts_acked, ca_rtt_us);
 
 #if FASTRETRANS_DEBUG > 0
 	WARN_ON((int)tp->sacked_out < 0);
@@ -3381,10 +3370,9 @@ static void tcp_snd_una_update(struct tcp_sock *tp, u32 ack)
 {
 	u32 delta = ack - tp->snd_una;
 
-	sock_owned_by_me((struct sock *)tp);
-	u64_stats_update_begin_raw(&tp->syncp);
+	u64_stats_update_begin(&tp->syncp);
 	tp->bytes_acked += delta;
-	u64_stats_update_end_raw(&tp->syncp);
+	u64_stats_update_end(&tp->syncp);
 	tp->snd_una = ack;
 }
 
@@ -3393,10 +3381,9 @@ static void tcp_rcv_nxt_update(struct tcp_sock *tp, u32 seq)
 {
 	u32 delta = seq - tp->rcv_nxt;
 
-	sock_owned_by_me((struct sock *)tp);
-	u64_stats_update_begin_raw(&tp->syncp);
+	u64_stats_update_begin(&tp->syncp);
 	tp->bytes_received += delta;
-	u64_stats_update_end_raw(&tp->syncp);
+	u64_stats_update_end(&tp->syncp);
 	tp->rcv_nxt = seq;
 }
 
@@ -5665,7 +5652,7 @@ static bool tcp_rcv_fastopen_synack(struct sock *sk, struct sk_buff *synack,
 	if (data) { /* Retransmit unacked data in SYN */
 		tcp_for_write_queue_from(data, sk) {
 			if (data == tcp_send_head(sk) ||
-			    __tcp_retransmit_skb(sk, data, 1))
+			    __tcp_retransmit_skb(sk, data))
 				break;
 		}
 		tcp_rearm_rto(sk);

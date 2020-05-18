@@ -987,7 +987,6 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc)
 	if (unlikely(!sde_crtc->num_mixers))
 		return;
 
-
 	SDE_ATRACE_BEGIN("crtc_commit");
 
         cpu_input_boost_kick();

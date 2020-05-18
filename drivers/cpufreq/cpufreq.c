@@ -649,25 +649,8 @@ static int cpufreq_parse_governor(char *str_governor, unsigned int *policy,
 			ret = request_module("cpufreq_%s", str_governor);
 			mutex_lock(&cpufreq_governor_mutex);
 
-			/*
-			 * At this point, if the governor was found via module
-			 * search, it will load it. However, if it didn't, we
-			 * are just going to exit without doing anything to
-			 * the governor. Most of the time, this is totally
-			 * fine; the one scenario where it's not is when a ROM
-			 * has a boot script that requests a governor that
-			 * exists in the default kernel but not in this one.
-			 * This kernel (and nearly every other Android kernel)
-			 * has the performance governor as default for boot
-			 * performance which is then changed to another,
-			 * usually interactive. So, instead of just exiting if
-			 * the requested governor wasn't found, let's try
-			 * falling back to interactive before falling out.
-			 */
 			if (ret == 0)
 				t = find_governor(str_governor);
-			else
-				t = find_governor("interactive");
 		}
 
 		if (t != NULL) {
@@ -724,9 +707,6 @@ static ssize_t store_##file_name					\
 {									\
 	int ret, temp;							\
 	struct cpufreq_policy new_policy;				\
-									\
-	if (&policy->object == &policy->min)				\
-		return count;						\
 									\
 	memcpy(&new_policy, policy, sizeof(*policy));			\
 	new_policy.min = policy->user_policy.min;			\
@@ -2047,15 +2027,6 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 	}
 
 out:
-	/*
-	 * This might look like a redundant call as we are checking it again
-	 * after finding index. But it is left intentionally for cases where
-	 * exactly same freq is called again and so we can save on few function
-	 * calls.
-	 */
-	if (target_freq == policy->cur)
-		retval = 0;
-
 	return retval;
 }
 EXPORT_SYMBOL_GPL(__cpufreq_driver_target);
@@ -2314,10 +2285,7 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 			return ret;
 		}
 
-		up_write(&policy->rwsem);
 		ret = __cpufreq_governor(policy, CPUFREQ_GOV_POLICY_EXIT);
-		down_write(&policy->rwsem);
-
 		if (ret) {
 			pr_err("%s: Failed to Exit Governor: %s (%d)\n",
 			       __func__, old_gov->name, ret);
@@ -2333,9 +2301,7 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 		if (!ret)
 			goto out;
 
-		up_write(&policy->rwsem);
 		__cpufreq_governor(policy, CPUFREQ_GOV_POLICY_EXIT);
-		down_write(&policy->rwsem);
 	}
 
 	/* new governor failed, so re-start old one */

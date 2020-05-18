@@ -79,14 +79,6 @@
 #include <linux/sysctl.h>
 #include <linux/kcov.h>
 #include <linux/cpufreq_times.h>
-#include <linux/simple_lmk.h>
-#include <linux/cpufreq.h>
-#include <linux/cpu_input_boost.h>
-#include <linux/simple_lmk.h>
-#include <linux/devfreq_boost.h>
-#include <linux/boost_control.h>
-#include <linux/cpu_input_boost.h>
-#include <linux/devfreq_boost.h>
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -728,7 +720,6 @@ static inline void __mmput(struct mm_struct *mm)
 	ksm_exit(mm);
 	khugepaged_exit(mm); /* must run before exit_mmap */
 	exit_mmap(mm);
-	simple_lmk_mm_freed(mm);
 	set_mm_exe_file(mm, NULL);
 	if (!list_empty(&mm->mmlist)) {
 		spin_lock(&mmlist_lock);
@@ -1028,7 +1019,6 @@ static int copy_mm(unsigned long clone_flags, struct task_struct *tsk)
 
 	tsk->min_flt = tsk->maj_flt = 0;
 	tsk->nvcsw = tsk->nivcsw = 0;
-	mm_event_task_init(tsk);
 #ifdef CONFIG_DETECT_HUNG_TASK
 	tsk->last_switch_count = tsk->nvcsw + tsk->nivcsw;
 #endif
@@ -1788,8 +1778,6 @@ struct task_struct *fork_idle(int cpu)
 	return task;
 }
 
-
-
 /*
  *  Ok, this is the main fork-routine.
  *
@@ -1807,19 +1795,6 @@ long _do_fork(unsigned long clone_flags,
 	int trace = 0;
 	long nr;
 
-<<<<<<< HEAD
-	if (app_launch_boost_ms && task_is_zygote(current)) {
-		cpu_input_boost_kick_max(app_launch_boost_ms);
-		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, app_launch_boost_ms);
-    }
-=======
-	/* Boost CPU to the max for 50 ms when userspace launches an app */
-	if (task_is_zygote(current)) {
-		cpu_input_boost_kick_max(50);
-		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 50);
-	}
-
->>>>>>> 0ea266ab87a0... kernel: Boost to the max for a short amount of time when zygote forks
 	/*
 	 * Determine whether and which event to report to ptracer.  When
 	 * called from kernel_thread or CLONE_UNTRACED is explicitly

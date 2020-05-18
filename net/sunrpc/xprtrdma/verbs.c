@@ -1343,14 +1343,15 @@ rpcrdma_ep_post_extra_recv(struct rpcrdma_xprt *r_xprt, unsigned int count)
 	struct rpcrdma_ia *ia = &r_xprt->rx_ia;
 	struct rpcrdma_ep *ep = &r_xprt->rx_ep;
 	struct rpcrdma_rep *rep;
+	unsigned long flags;
 	int rc;
 
 	while (count--) {
-		spin_lock(&buffers->rb_lock);
+		spin_lock_irqsave(&buffers->rb_lock, flags);
 		if (list_empty(&buffers->rb_recv_bufs))
 			goto out_reqbuf;
 		rep = rpcrdma_buffer_get_rep_locked(buffers);
-		spin_unlock(&buffers->rb_lock);
+		spin_unlock_irqrestore(&buffers->rb_lock, flags);
 
 		rc = rpcrdma_ep_post_recv(ia, ep, rep);
 		if (rc)
@@ -1360,7 +1361,7 @@ rpcrdma_ep_post_extra_recv(struct rpcrdma_xprt *r_xprt, unsigned int count)
 	return 0;
 
 out_reqbuf:
-	spin_unlock(&buffers->rb_lock);
+	spin_unlock_irqrestore(&buffers->rb_lock, flags);
 	pr_warn("%s: no extra receive buffers\n", __func__);
 	return -ENOMEM;
 

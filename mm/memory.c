@@ -103,12 +103,10 @@ EXPORT_SYMBOL(high_memory);
  *   as ancient (libc5 based) binaries can segfault. )
  */
 int randomize_va_space __read_mostly =
-#if defined(CONFIG_ASLR_FULL)
-					2;
-#elif defined(CONFIG_ASLR_PARTIAL)
+#ifdef CONFIG_COMPAT_BRK
 					1;
 #else
-					0;
+					2;
 #endif
 
 static int __init disable_randmaps(char *s)
@@ -2696,7 +2694,7 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 unlock:
 	pte_unmap_unlock(page_table, ptl);
 out:
-	return ret | VM_FAULT_SWAP;
+	return ret;
 out_nomap:
 	mem_cgroup_cancel_charge(page, memcg);
 	pte_unmap_unlock(page_table, ptl);
@@ -2708,7 +2706,7 @@ out_release:
 		unlock_page(swapcache);
 		page_cache_release(swapcache);
 	}
-	return ret | VM_FAULT_SWAP;
+	return ret;
 }
 
 /*

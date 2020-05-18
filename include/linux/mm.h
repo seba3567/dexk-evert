@@ -267,7 +267,7 @@ struct vm_fault {
 /*
  * These are the virtual MM functions - opening of an area, closing and
  * unmapping it (needed to keep files on disk up-to-date etc), pointer
- * to the functions called when a no-page or a wp-page exception occurs.
+ * to the functions called when a no-page or a wp-page exception occurs. 
  */
 struct vm_operations_struct {
 	void (*open)(struct vm_area_struct * area);
@@ -1068,7 +1068,6 @@ static inline void clear_page_pfmemalloc(struct page *page)
 #define VM_FAULT_HWPOISON 0x0010	/* Hit poisoned small page */
 #define VM_FAULT_HWPOISON_LARGE 0x0020  /* Hit poisoned large page. Index encoded in upper bits */
 #define VM_FAULT_SIGSEGV 0x0040
-#define VM_FAULT_SWAP 0x0080
 
 #define VM_FAULT_NOPAGE	0x0100	/* ->fault installed the pte, not return page */
 #define VM_FAULT_LOCKED	0x0200	/* ->fault locked the returned page */
@@ -2032,7 +2031,7 @@ void task_dirty_inc(struct task_struct *tsk);
 
 /* readahead.c */
 #define VM_MAX_READAHEAD	512	/* kbytes */
-#define VM_MIN_READAHEAD	64	/* kbytes (includes current page) */
+#define VM_MIN_READAHEAD	16	/* kbytes (includes current page) */
 
 int force_page_cache_readahead(struct address_space *mapping, struct file *filp,
 			pgoff_t offset, unsigned long nr_to_read);

@@ -302,7 +302,7 @@ late_initcall(sched_init_debug);
  * Number of tasks to iterate in a single balance run.
  * Limited because this is done with IRQs disabled.
  */
-const_debug unsigned int sysctl_sched_nr_migrate = 128;
+const_debug unsigned int sysctl_sched_nr_migrate = 32;
 
 /*
  * period over which we average the RT time consumption, measured
@@ -322,9 +322,9 @@ __read_mostly int scheduler_running;
 
 /*
  * part of the period that we allow rt tasks to run in us.
- * XanMod default: 0.98s
+ * default: 0.95s
  */
-int sysctl_sched_rt_runtime = 980000;
+int sysctl_sched_rt_runtime = 950000;
 
 /* cpus with isolated domains */
 cpumask_var_t cpu_isolated_map;
@@ -354,71 +354,6 @@ static struct rq *this_rq_lock(void)
 	raw_spin_lock(&rq->lock);
 
 	return rq;
-}
-
-/*
- * __task_rq_lock - lock the rq @p resides on.
- */
-struct rq *__task_rq_lock(struct task_struct *p)
-	__acquires(rq->lock)
-{
-	struct rq *rq;
-
-	lockdep_assert_held(&p->pi_lock);
-
-	for (;;) {
-		rq = task_rq(p);
-		raw_spin_lock(&rq->lock);
-		if (likely(rq == task_rq(p) && !task_on_rq_migrating(p))) {
-			lockdep_pin_lock(&rq->lock);
-			return rq;
-		}
-		raw_spin_unlock(&rq->lock);
-
-		while (unlikely(task_on_rq_migrating(p)))
-			cpu_relax();
-	}
-}
-
-/*
- * task_rq_lock - lock p->pi_lock and lock the rq @p resides on.
- */
-struct rq *task_rq_lock(struct task_struct *p, unsigned long *flags)
-	__acquires(p->pi_lock)
-	__acquires(rq->lock)
-{
-	struct rq *rq;
-
-	for (;;) {
-		raw_spin_lock_irqsave(&p->pi_lock, *flags);
-		rq = task_rq(p);
-		raw_spin_lock(&rq->lock);
-		/*
-		 *	move_queued_task()		task_rq_lock()
-		 *
-		 *	ACQUIRE (rq->lock)
-		 *	[S] ->on_rq = MIGRATING		[L] rq = task_rq()
-		 *	WMB (__set_task_cpu())		ACQUIRE (rq->lock);
-		 *	[S] ->cpu = new_cpu		[L] task_rq()
-		 *					[L] ->on_rq
-		 *	RELEASE (rq->lock)
-		 *
-		 * If we observe the old cpu in task_rq_lock, the acquire of
-		 * the old rq->lock will fully serialize against the stores.
-		 *
-		 * If we observe the new cpu in task_rq_lock, the acquire will
-		 * pair with the WMB to ensure we must then also see migrating.
-		 */
-		if (likely(rq == task_rq(p) && !task_on_rq_migrating(p))) {
-			lockdep_pin_lock(&rq->lock);
-			return rq;
-		}
-		raw_spin_unlock(&rq->lock);
-		raw_spin_unlock_irqrestore(&p->pi_lock, *flags);
-
-		while (unlikely(task_on_rq_migrating(p)))
-			cpu_relax();
-	}
 }
 
 #ifdef CONFIG_SCHED_HRTICK
@@ -1041,7 +976,7 @@ static void update_rq_clock_task(struct rq *rq, s64 delta)
 	rq->clock_task += delta;
 
 #if defined(CONFIG_IRQ_TIME_ACCOUNTING) || defined(CONFIG_PARAVIRT_TIME_ACCOUNTING)
-	if ((irq_delta + steal) && !!sched_feat(NONTASK_CAPACITY))
+	if ((irq_delta + steal) && sched_feat(NONTASK_CAPACITY))
 		sched_rt_avg_update(rq, irq_delta + steal);
 #endif
 }
@@ -1356,10 +1291,6 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 	unsigned int dest_cpu;
 	int ret = 0;
 	cpumask_t allowed_mask;
-
-	/* Force all performance-critical kthreads onto the big cluster */
-	if (p->flags & PF_PERF_CRITICAL)
-		new_mask = cpu_perf_mask;
 
 	rq = task_rq_lock(p, &flags);
 
