@@ -1078,8 +1078,8 @@
 			< 588000000 5>,  /* NOM    */
 			< 647000000 6>,  /* NOM_L1 */
 			< 648000000 7>,  /* TURBO  */
-			< 700000000 8>,  /* TURBO+  */
-			< 775000000 9>;  /* TURBO++  */
+			< 700000000 7>,  /* TURBO  */
+			< 775000000 7>;  /* TURBO  */
 		#clock-cells = <1>;
 		#reset-cells = <1>;
 	};
@@ -1726,7 +1726,7 @@
 
 		vdd_cx-supply = <&pm660l_l9_level>;
 		qcom,proxy-reg-names = "vdd_cx";
-		qcom,vdd_cx-uV-uA = <RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS 100000>;
+		qcom,vdd_cx-uV-uA = <RPM_SMD_REGULATOR_LEVEL_TURBO 100000>;
 
 		clocks = <&clock_rpmcc CXO_PIL_LPASS_CLK>;
 		clock-names = "xo";
@@ -1811,9 +1811,9 @@
 
 		interrupts = <0 448 1>;
 		vdd_cx-supply = <&pm660l_s3_level>;
-		vdd_cx-voltage = <RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+		vdd_cx-voltage = <RPM_SMD_REGULATOR_LEVEL_TURBO>;
 		vdd_mx-supply = <&pm660l_s5_level>;
-		vdd_mx-uV = <RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+		vdd_mx-uV = <RPM_SMD_REGULATOR_LEVEL_TURBO>;
 		qcom,firmware-name = "modem";
 		qcom,pil-self-auth;
 		qcom,sysmon-id = <0>;
@@ -2322,3 +2322,4 @@
 		qcom,max-vote = <6750>;
 	};
 };
+

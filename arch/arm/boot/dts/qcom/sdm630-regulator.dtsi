@@ -71,7 +71,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-level;
 		};
 
@@ -82,7 +82,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-floor-level;
 			qcom,always-send-voltage;
 		};
@@ -94,7 +94,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-level;
 		};
 	};
@@ -109,7 +109,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-level;
 		};
 
@@ -120,7 +120,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-floor-level;
 			qcom,always-send-voltage;
 		};
@@ -132,7 +132,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-level;
 		};
 	};
@@ -400,7 +400,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-level;
 		};
 
@@ -411,7 +411,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-floor-level;
 			qcom,always-send-voltage;
 		};
@@ -427,7 +427,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-level;
 		};
 
@@ -438,7 +438,7 @@
 			regulator-min-microvolt =
 				<RPM_SMD_REGULATOR_LEVEL_RETENTION>;
 			regulator-max-microvolt =
-				<RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+				<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 			qcom,use-voltage-floor-level;
 			qcom,always-send-voltage;
 		};
@@ -564,24 +564,22 @@
 			gfx_vreg_corner: regulator {
 				regulator-name = "gfx_corner";
 				regulator-min-microvolt = <1>;
-				regulator-max-microvolt = <9>;
+				regulator-max-microvolt = <7>;
 
 				qcom,cpr-fuse-corners = <6>;
 				qcom,cpr-fuse-combos = <8>;
-				qcom,cpr-corners = <9>;
+				qcom,cpr-corners = <7>;
 
 				qcom,cpr-corner-fmax-map = <1 2 3 4 5 6>;
 
 				qcom,cpr-voltage-ceiling =
 					<535000  595000  675000  740000
-					 820000  875000  879000 1020000
-           16800000>;
+					 820000  875000 1020000>;
 				qcom,cpr-voltage-floor =
 					<454000  454000  546000  602000
-					 662000  694000  698000 1020000
-           16800000>;
+					 662000  694000 1020000>;
 
-				qcom,mem-acc-voltage = <1 1 1 2 2 2 2 2 2>;
+				qcom,mem-acc-voltage = <1 1 1 2 2 2 2>;
 				qcom,system-voltage =
 					<RPM_SMD_REGULATOR_LEVEL_LOW_SVS>,
 					<RPM_SMD_REGULATOR_LEVEL_LOW_SVS>,
@@ -589,14 +587,12 @@
 					<RPM_SMD_REGULATOR_LEVEL_SVS_PLUS>,
 					<RPM_SMD_REGULATOR_LEVEL_NOM>,
 					<RPM_SMD_REGULATOR_LEVEL_NOM_PLUS>,
-					<RPM_SMD_REGULATOR_LEVEL_TURBO_SVS>,
-                                        <RPM_SMD_REGULATOR_LEVEL_TURBO>,
-                                        <RPM_SMD_REGULATOR_LEVEL_TURBO_PLUS>;
+					<RPM_SMD_REGULATOR_LEVEL_TURBO>;
 
 				qcom,corner-frequencies =
 					<160000000 240000000 370000000
 					 465000000 588000000 647000000
-					 648000000 700000000 775000000>;
+					 700000000>;
 
 				qcom,cpr-target-quotients =
 					<0    0    0    0     0    0  174  167
@@ -632,9 +628,9 @@
 
 				qcom,cpr-scaled-open-loop-voltage-as-ceiling;
 				qcom,cpr-corner-allow-ldo-mode =
-					<0 0 0 0 0 0 0 0 0>;
+					<0 0 0 0 0 0 0>;
 				qcom,cpr-corner-allow-closed-loop =
-					<0 0 0 0 0 0 0 0 0>;
+					<0 0 0 0 0 0 0>;
 			};
 		};
 	};
@@ -699,7 +695,7 @@
 
 				qcom,cpr-voltage-ceiling =
 					<724000   724000   788000  788000
-					 1068000 1068000  1068000 1068000
+					 1068000 1068000  1068000 1068000 
                                          1068000>;
 
 				qcom,cpr-voltage-floor =
@@ -937,3 +933,4 @@
 		};
 	};
 };
+
