@@ -21,8 +21,6 @@
 
 #include "power.h"
 
-<<<<<<< HEAD
-=======
 
 #ifdef CONFIG_BOEFFLA_WL_BLOCKER
 #include "boeffla_wl_blocker.h"
@@ -57,7 +55,6 @@ module_param(enable_timerfd_ws, bool, 0644);
 static bool enable_netlink_ws = true;
 module_param(enable_netlink_ws, bool, 0644);
 
->>>>>>> 62b3e3198809... Add more  WakeLock Toggles with Optimizations
 /*
  * If set, the suspend/hibernate code will abort transitions to a sleep state
  * if wakeup events are registered during or immediately before the transition.
@@ -704,15 +701,7 @@ static void wakeup_source_activate(struct wakeup_source *ws)
  */
 static void wakeup_source_report_event(struct wakeup_source *ws)
 {
-<<<<<<< HEAD
-	ws->event_count++;
-	/* This is racy, but the counter is approximate anyway. */
-	if (events_check_enabled)
-		ws->wakeup_count++;
 
-	if (!ws->active)
-		wakeup_source_activate(ws);
-=======
 #ifdef CONFIG_BOEFFLA_WL_BLOCKER
 	if (!check_for_block(ws))	// AP: check if wakelock is on wakelock blocker list
 	{
@@ -731,7 +720,7 @@ static void wakeup_source_report_event(struct wakeup_source *ws)
 	}
 #endif
 	}
->>>>>>> 62b3e3198809... Add more  WakeLock Toggles with Optimizations
+
 }
 
 /**
