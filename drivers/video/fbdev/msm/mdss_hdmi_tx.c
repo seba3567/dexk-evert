@@ -3596,12 +3596,6 @@ static void hdmi_tx_hpd_off(struct hdmi_tx_ctrl *hdmi_ctrl)
 	hdmi_ctrl->hpd_initialized = false;
 	hdmi_ctrl->hpd_off_pending = false;
 	hdmi_ctrl->dc_support = false;
-<<<<<<< HEAD
-
-	hdmi_edid_reset_parser(hdmi_tx_get_fd(HDMI_TX_FEAT_EDID));
-=======
->>>>>>> 2951ab4a4b64... Merge tag 'LA.UM.8.2.r1-06300-sdm660.0' into kernel.lnx.4.4.r38-rel
-
 	hdmi_edid_reset_parser(hdmi_tx_get_fd(HDMI_TX_FEAT_EDID));
 
 	DEV_DBG("%s: HPD is now OFF\n", __func__);

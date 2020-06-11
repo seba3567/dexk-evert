@@ -1237,8 +1237,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	if (on_cmds->cmd_cnt)
 		mdss_dsi_panel_cmds_send(ctrl, on_cmds, CMD_REQ_COMMIT);
 
-<<<<<<< HEAD
-=======
 #ifdef CONFIG_MACH_MI
 	if (pinfo->panel_dead && pinfo->initial_esd_check.check_cmd
 		&& pinfo->initial_esd_check.check_value) {
