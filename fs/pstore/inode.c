@@ -36,13 +36,6 @@
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/uaccess.h>
-<<<<<<< HEAD
-=======
-#include <linux/syslog.h>
-#ifdef CONFIG_PSTORE_LAST_KMSG
-#include <linux/proc_fs.h>
-#endif
->>>>>>> b6bdf7b15dee... ANDROID: pstore: Use vmalloc for large allocations due to ramoops size
 #include <linux/vmalloc.h>
 
 #include "internal.h"
