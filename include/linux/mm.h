@@ -2388,8 +2388,6 @@ int drop_caches_sysctl_handler(struct ctl_table *, int,
 void drop_slab(void);
 void drop_slab_node(int nid);
 
-void mm_drop_caches(int val);
-
 void drop_pagecache_sb(struct super_block *sb, void *unused);
 
 #ifndef CONFIG_MMU
