@@ -290,9 +290,7 @@ int cnss_bus_dev_shutdown(struct cnss_plat_data *plat_priv)
 	case CNSS_BUS_PCI:
 		return cnss_pci_dev_shutdown(plat_priv->bus_priv);
 	case CNSS_BUS_USB:
-		return cnss_usb_dev_shutdown(plat_priv->bus_priv);
-	case CNSS_BUS_SDIO:
-		return cnss_sdio_dev_shutdown(plat_priv->bus_priv);
+		return 0;
 	default:
 		cnss_pr_err("Unsupported bus type: %d\n",
 			    plat_priv->bus_type);
