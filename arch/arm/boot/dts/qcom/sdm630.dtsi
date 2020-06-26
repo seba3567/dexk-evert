@@ -1144,7 +1144,7 @@
 
 	mincpubw: qcom,mincpubw {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports = <1 512>;
 		qcom,active-only;
 		qcom,bw-tbl =
@@ -1163,7 +1163,7 @@
 
 	memlat_cpu0: qcom,memlat-cpu0 {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports = <1 512>;
 		qcom,active-only;
 		qcom,bw-tbl =
@@ -1182,7 +1182,7 @@
 
 	memlat_cpu4: qcom,memlat-cpu4 {
 		compatible = "qcom,devbw";
-		governor = "performance";
+		governor = "powersave";
 		qcom,src-dst-ports = <1 512>;
 		qcom,active-only;
 		qcom,bw-tbl =
