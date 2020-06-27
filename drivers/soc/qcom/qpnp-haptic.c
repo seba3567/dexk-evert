@@ -890,12 +890,12 @@ static int qpnp_hap_vmax_config(struct qpnp_hap *hap, int vmax_mv,
 	if (hap->pmic_subtype != PM660_SUBTYPE)
 		overdrive = false;
 
-	if (vmax_mv < QPNP_HAP_VMAX_MIN_MV)
-		vmax_mv = QPNP_HAP_VMAX_MIN_MV;
-	else if (vmax_mv > QPNP_HAP_VMAX_MAX_MV)
-		vmax_mv = QPNP_HAP_VMAX_MAX_MV;
+	if (vmax_mv < hap->vtg_min)
+		vmax_mv = hap->vtg_min;
+	else if (vmax_mv > hap->vtg_max)
+		vmax_mv = hap->vtg_max;
 
-	val = (vmax_mv / QPNP_HAP_VMAX_MIN_MV) << QPNP_HAP_VMAX_SHIFT;
+	val = (vmax_mv / hap->vtg_min) << QPNP_HAP_VMAX_SHIFT;
 	if (overdrive)
 		val |= QPNP_HAP_VMAX_OVD_BIT;
 	rc = qpnp_hap_masked_write_reg(hap, QPNP_HAP_VMAX_REG(hap->base),
