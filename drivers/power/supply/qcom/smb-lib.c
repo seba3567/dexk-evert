@@ -1274,7 +1274,6 @@ static int smblib_hvdcp_enable_vote_callback(struct votable *votable,
 #ifdef QCOM_BASE
 	/* vote to enable/disable HW autonomous INOV */
 	vote(chg->hvdcp_hw_inov_dis_votable, client, !hvdcp_enable, 0);
-<<<<<<< HEAD
 #endif
 	/*
 	 * Disable the autonomous bit and auth bit for disabling hvdcp.
@@ -1285,12 +1284,6 @@ static int smblib_hvdcp_enable_vote_callback(struct votable *votable,
 	if (!hvdcp_enable)
 		val = HVDCP_EN_BIT;
 #endif
-=======
-
-	if (!hvdcp_enable)
-		val = 0;
-
->>>>>>> cb935a528c45... smb-lib: clear HVDCP_EN when disabling HVDCP
 	rc = smblib_masked_write(chg, USBIN_OPTIONS_1_CFG_REG,
 #ifdef QCOM_BASE
 				 HVDCP_EN_BIT | HVDCP_AUTH_ALG_EN_CFG_BIT,
