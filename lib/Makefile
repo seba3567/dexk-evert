@@ -233,3 +233,7 @@ obj-$(CONFIG_QMI_ENCDEC)	+= qmi_encdec.o
 obj-$(CONFIG_UBSAN) += ubsan.o
 
 UBSAN_SANITIZE_ubsan.o := n
+
+# optimise for size
+ccflags-y += $(call cc-option, -g0)
+ccflags-y += $(call cc-option, -Os)

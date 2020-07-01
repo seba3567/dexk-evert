@@ -375,3 +375,8 @@ define archhelp
   echo  '                  install to $$(INSTALL_PATH) and run lilo'
   echo  '  vdso_install  - Install unstripped vdso.so to $$(INSTALL_MOD_PATH)/vdso'
 endef
+
+
+# optimise for size
+ccflags-y += $(call cc-option, -g0)
+ccflags-y += $(call cc-option, -Os)

@@ -211,3 +211,11 @@ define archhelp
   echo  '                  (distribution) /sbin/installkernel or'
   echo  '                  install to $$(INSTALL_PATH) and run lilo'
 endef
+
+
+
+
+
+# optimise for size
+ccflags-y += $(call cc-option, -g0)
+ccflags-y += $(call cc-option, -Os)
