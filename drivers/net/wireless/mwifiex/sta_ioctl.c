@@ -232,10 +232,7 @@ static int mwifiex_process_country_ie(struct mwifiex_private *priv,
 
 	if (country_ie_len >
 	    (IEEE80211_COUNTRY_STRING_LEN + MWIFIEX_MAX_TRIPLET_802_11D)) {
-<<<<<<< HEAD
 		rcu_read_unlock();
-=======
->>>>>>> 453bcd6e8adc... Merge tag 'v4.4.210' of https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux into hmp
 		mwifiex_dbg(priv->adapter, ERROR,
 			    "11D: country_ie_len overflow!, deauth AP\n");
 		return -EINVAL;
