@@ -34,15 +34,6 @@ module_param(input_boost_duration, short, 0644);
 #define WAKE_BOOST		BIT(2)
 #define MAX_BOOST		BIT(3)
 
-unsigned long last_input_time;
-
-enum {
-	SCREEN_OFF,
-	INPUT_BOOST,
-	MAX_BOOST
-};
->>>>>>> 942b7fb3a801... msm: mdss: Boost only if last interaction was within 1s
-
 struct boost_drv {
 	struct workqueue_struct *wq;
 	struct work_struct input_boost;
@@ -261,15 +252,9 @@ static void cpu_input_boost_input_event(struct input_handle *handle,
 	if (!(state & SCREEN_AWAKE))
 		return;
 
-<<<<<<< HEAD
 	queue_work(b->wq, &b->input_boost);
 
 	//__cpu_input_boost_kick(b);
-=======
-	__cpu_input_boost_kick(b);
-
-	last_input_time = jiffies;
->>>>>>> 942b7fb3a801... msm: mdss: Boost only if last interaction was within 1s
 }
 
 static int cpu_input_boost_input_connect(struct input_handler *handler,
