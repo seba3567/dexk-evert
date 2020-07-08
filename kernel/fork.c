@@ -1802,18 +1802,6 @@ long _do_fork(unsigned long clone_flags,
 	int trace = 0;
 	long nr;
 
-	/* Boost DDR to the max when userspace launches an app */
-	if (app_launch_boost_ms && task_is_zygote(current)) {
-		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW,app_launch_boost_ms);
-		cpu_input_boost_kick_max(app_launch_boost_ms);
-    }
-
-    if (task_is_zygote(current)) {
-		sysctl_sched_energy_aware = 0;
-	} else {
-		sysctl_sched_energy_aware = 1;
-}
-
 	/*
 	 * Determine whether and which event to report to ptracer.  When
 	 * called from kernel_thread or CLONE_UNTRACED is explicitly
