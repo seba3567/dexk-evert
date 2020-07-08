@@ -25,6 +25,7 @@
 #include <crypto/hash.h>
 #include <linux/writeback.h>
 #include <linux/overflow.h>
+#include <linux/wait.h>
 
 #define __FS_HAS_ENCRYPTION IS_ENABLED(CONFIG_F2FS_FS_ENCRYPTION)
 #include <linux/fscrypt.h>
@@ -184,14 +185,14 @@ static inline int wbc_to_write_flags(struct writeback_control *wbc)
 }
 
 /**
- * wq_has_sleeper - check if there are any waiting processes
+ * skwq_has_sleeper - check if there are any waiting processes
  * @wq: wait queue head
  *
  * Returns true if wq has waiting processes
  *
  * Please refer to the comment for waitqueue_active.
  */
-static inline bool wq_has_sleeper(wait_queue_head_t *wq)
+static inline bool skwq_has_sleeper(wait_queue_head_t *wq)
 {
 	/*
 	 * We need to be sure we are in sync with the
