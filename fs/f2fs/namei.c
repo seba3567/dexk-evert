@@ -451,6 +451,7 @@ static struct dentry *f2fs_lookup(struct inode *dir, struct dentry *dentry,
 			err = PTR_ERR(page);
 			goto out;
 		}
+		err = -ENOENT;
 		goto out_splice;
 	}
 
@@ -486,7 +487,7 @@ out_splice:
 	new = d_splice_alias(inode, dentry);
 	if (IS_ERR(new))
 		err = PTR_ERR(new);
-	trace_f2fs_lookup_end(dir, dentry, ino, err);
+	trace_f2fs_lookup_end(dir, dentry, ino, !new ? -ENOENT : err);
 	return new;
 out_iput:
 	iput(inode);
@@ -501,7 +502,7 @@ static int f2fs_unlink(struct inode *dir, struct dentry *dentry)
 	struct inode *inode = d_inode(dentry);
 	struct f2fs_dir_entry *de;
 	struct page *page;
-	int err = -ENOENT;
+	int err;
 
 	trace_f2fs_unlink_enter(dir, dentry);
 
@@ -841,14 +842,15 @@ static int f2fs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		return -EXDEV;
 
 	/*
-	 * old entry and new entry can locate in the same inline
-	 * dentry in inode, when attaching new entry in inline dentry,
-	 * it could force inline dentry conversion, after that,
-	 * old_entry and old_page will point to wrong address, in
-	 * order to avoid this, let's do the check and update here.
+	 * If new_inode is null, the below renaming flow will
+	 * add a link in old_dir which can conver inline_dir.
+	 * After then, if we failed to get the entry due to other
+	 * reasons like ENOMEM, we had to remove the new entry.
+	 * Instead of adding such the error handling routine, let's
+	 * simply convert first here.
 	 */
 	if (old_dir == new_dir && !new_inode) {
-		err = f2fs_convert_inline_dir(old_dir);
+		err = f2fs_try_convert_inline_dir(old_dir, new_dentry);
 		if (err)
 			return err;
 	}

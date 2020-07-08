@@ -246,6 +246,22 @@ static inline void limit_reserve_root(struct f2fs_sb_info *sbi)
 					   F2FS_OPTION(sbi).s_resgid));
 }
 
+static inline void adjust_unusable_cap_perc(struct f2fs_sb_info *sbi)
+{
+	if (!F2FS_OPTION(sbi).unusable_cap_perc)
+		return;
+
+	if (F2FS_OPTION(sbi).unusable_cap_perc == 100)
+		F2FS_OPTION(sbi).unusable_cap = sbi->user_block_count;
+	else
+		F2FS_OPTION(sbi).unusable_cap = (sbi->user_block_count / 100) *
+					F2FS_OPTION(sbi).unusable_cap_perc;
+
+	f2fs_info(sbi, "Adjust unusable cap for checkpoint=disable = %u / %u%%",
+			F2FS_OPTION(sbi).unusable_cap,
+			F2FS_OPTION(sbi).unusable_cap_perc);
+}
+
 static void init_once(void *foo)
 {
 	struct f2fs_inode_info *fi = (struct f2fs_inode_info *) foo;
@@ -759,12 +775,7 @@ static int parse_options(struct super_block *sb, char *options)
 				return -EINVAL;
 			if (arg < 0 || arg > 100)
 				return -EINVAL;
-			if (arg == 100)
-				F2FS_OPTION(sbi).unusable_cap =
-					sbi->user_block_count;
-			else
-				F2FS_OPTION(sbi).unusable_cap =
-					(sbi->user_block_count / 100) *	arg;
+			F2FS_OPTION(sbi).unusable_cap_perc = arg;
 			set_opt(sbi, DISABLE_CHECKPOINT);
 			break;
 		case Opt_checkpoint_disable_cap:
@@ -1056,7 +1067,7 @@ static void f2fs_put_super(struct super_block *sb)
 	/* our cp_error case, we can wait for any writeback page */
 	f2fs_flush_merged_writes(sbi);
 
-	f2fs_wait_on_all_pages_writeback(sbi);
+	f2fs_wait_on_all_pages(sbi, F2FS_WB_CP_DATA);
 
 	f2fs_bug_on(sbi, sbi->fsync_node_num);
 
@@ -1163,14 +1174,10 @@ static int f2fs_statfs_project(struct super_block *sb,
 		return PTR_ERR(dquot);
 	spin_lock(&dq_data_lock);
 
-	limit = 0;
-	if (dquot->dq_dqb.dqb_bsoftlimit &&
-	   (!limit || dquot->dq_dqb.dqb_bsoftlimit < limit))
-		limit = dquot->dq_dqb.dqb_bsoftlimit;
-	if (dquot->dq_dqb.dqb_bhardlimit &&
-	   (!limit || dquot->dq_dqb.dqb_bhardlimit < limit))
-		limit = dquot->dq_dqb.dqb_bhardlimit;
-	limit >>= sb->s_blocksize_bits;
+	limit = min_not_zero(dquot->dq_dqb.dqb_bsoftlimit,
+					dquot->dq_dqb.dqb_bhardlimit);
+	if (limit)
+		limit >>= sb->s_blocksize_bits;
 
 	if (limit && buf->f_blocks > limit) {
 		curblock = dquot->dq_dqb.dqb_curspace >> sb->s_blocksize_bits;
@@ -1180,13 +1187,8 @@ static int f2fs_statfs_project(struct super_block *sb,
 			 (buf->f_blocks - curblock) : 0;
 	}
 
-	limit = 0;
-	if (dquot->dq_dqb.dqb_isoftlimit &&
-	   (!limit || dquot->dq_dqb.dqb_isoftlimit < limit))
-		limit = dquot->dq_dqb.dqb_isoftlimit;
-	if (dquot->dq_dqb.dqb_ihardlimit &&
-	   (!limit || dquot->dq_dqb.dqb_ihardlimit < limit))
-		limit = dquot->dq_dqb.dqb_ihardlimit;
+	limit = min_not_zero(dquot->dq_dqb.dqb_isoftlimit,
+					dquot->dq_dqb.dqb_ihardlimit);
 
 	if (limit && buf->f_files > limit) {
 		buf->f_files = limit;
@@ -1691,6 +1693,7 @@ skip:
 		(test_opt(sbi, POSIX_ACL) ? MS_POSIXACL : 0);
 
 	limit_reserve_root(sbi);
+	adjust_unusable_cap_perc(sbi);
 	*flags = (*flags & ~MS_LAZYTIME) | (sb->s_flags & MS_LAZYTIME);
 	return 0;
 restore_gc:
@@ -2852,12 +2855,14 @@ static int init_blkz_info(struct f2fs_sb_info *sbi, int devi)
 	if (nr_sectors & (bdev_zone_sectors(bdev) - 1))
 		FDEV(devi).nr_blkz++;
 
-	FDEV(devi).blkz_seq = f2fs_kzalloc(sbi,
+	FDEV(devi).blkz_seq = f2fs_kvzalloc(sbi,
 					BITS_TO_LONGS(FDEV(devi).nr_blkz)
 					* sizeof(unsigned long),
 					GFP_KERNEL);
 	if (!FDEV(devi).blkz_seq)
 		return -ENOMEM;
+
+#define F2FS_REPORT_NR_ZONES   4096
 
 	zones = f2fs_kzalloc(sbi,
 			     array_size(F2FS_REPORT_NR_ZONES,
@@ -3246,8 +3251,6 @@ try_onemore:
 			sbi->write_io[i][j].bio = NULL;
 			spin_lock_init(&sbi->write_io[i][j].io_lock);
 			INIT_LIST_HEAD(&sbi->write_io[i][j].io_list);
-			INIT_LIST_HEAD(&sbi->write_io[i][j].bio_list);
-			init_rwsem(&sbi->write_io[i][j].bio_list_lock);
 		}
 	}
 
@@ -3311,6 +3314,7 @@ try_onemore:
 	sbi->reserved_blocks = 0;
 	sbi->current_reserved_blocks = 0;
 	limit_reserve_root(sbi);
+	adjust_unusable_cap_perc(sbi);
 
 	for (i = 0; i < NR_INODE_TYPE; i++) {
 		INIT_LIST_HEAD(&sbi->inode_list[i]);
@@ -3429,8 +3433,7 @@ try_onemore:
 
 		err = f2fs_recover_fsync_data(sbi, false);
 		if (err < 0) {
-			if (err != -ENOMEM &&
-			    !is_sbi_flag_set(sbi, SBI_NEED_FSCK))
+			if (err != -ENOMEM)
 				skip_recovery = true;
 			need_fsck = true;
 			f2fs_err(sbi, "Cannot recover all fsync data errno=%d",
@@ -3446,18 +3449,6 @@ try_onemore:
 			goto free_meta;
 		}
 	}
-
-	/* fix and check zoned block devices' write pointer consistency */
-	if (f2fs_sb_has_blkzoned(sbi)) {
-		err = f2fs_check_write_pointer(sbi);
-		if (err)
-			goto free_meta;
-
-		err = f2fs_fix_curseg_write_pointer(sbi, f2fs_readonly(sb));
-		if (err)
-			goto free_meta;
-	}
-
 reset_checkpoint:
 	/* f2fs_recover_fsync_data() cleared this already */
 	clear_sbi_flag(sbi, SBI_POR_DOING);
@@ -3645,12 +3636,9 @@ static int __init init_f2fs_fs(void)
 	err = init_inodecache();
 	if (err)
 		goto fail;
-	err = f2fs_init_xattr_caches();
-	if (err)
-		goto free_inodecache;
 	err = f2fs_create_node_manager_caches();
 	if (err)
-		goto fail_xattr_caches;
+		goto free_inodecache;
 	err = f2fs_create_segment_manager_caches();
 	if (err)
 		goto free_node_manager_caches;
@@ -3675,17 +3663,8 @@ static int __init init_f2fs_fs(void)
 		goto free_root_stats;
 	f2fs_init_rapid_gc();
 
-	err = f2fs_init_bio_entry_cache();
-	if (err)
-		goto free_post_read;
-	err = f2fs_init_bioset();
-	if (err)
-		goto free_bio_enrty_cache;
 	return 0;
-free_bio_enrty_cache:
-	f2fs_destroy_bio_entry_cache();
-free_post_read:
-	f2fs_destroy_post_read_processing();
+
 free_root_stats:
 	f2fs_destroy_root_stats();
 	unregister_filesystem(&f2fs_fs_type);
@@ -3701,8 +3680,6 @@ free_segment_manager_caches:
 	f2fs_destroy_segment_manager_caches();
 free_node_manager_caches:
 	f2fs_destroy_node_manager_caches();
-fail_xattr_caches:
-	f2fs_destroy_xattr_caches();
 free_inodecache:
 	destroy_inodecache();
 fail:
@@ -3712,8 +3689,6 @@ fail:
 static void __exit exit_f2fs_fs(void)
 {
 	f2fs_destroy_rapid_gc();
-	f2fs_destroy_bioset();
-	f2fs_destroy_bio_entry_cache();
 	f2fs_destroy_post_read_processing();
 	f2fs_destroy_root_stats();
 	unregister_filesystem(&f2fs_fs_type);
@@ -3723,7 +3698,6 @@ static void __exit exit_f2fs_fs(void)
 	f2fs_destroy_checkpoint_caches();
 	f2fs_destroy_segment_manager_caches();
 	f2fs_destroy_node_manager_caches();
-	f2fs_destroy_xattr_caches();
 	destroy_inodecache();
 	f2fs_destroy_trace_ios();
 }
