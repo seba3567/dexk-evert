@@ -108,14 +108,14 @@ static inline int waitqueue_active(wait_queue_head_t *q)
 }
 
 /**
- * wq_has_sleeper - check if there are any waiting processes
+ * skwq_has_sleeper - check if there are any waiting processes
  * @wq: wait queue head
  *
  * Returns true if wq has waiting processes
  *
  * Please refer to the comment for waitqueue_active.
  */
-static inline bool wq_has_sleeper(wait_queue_head_t *wq)
+static inline bool skwq_has_sleeper(wait_queue_head_t *wq)
 {
 	/*
 	 * We need to be sure we are in sync with the
