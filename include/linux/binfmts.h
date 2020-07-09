@@ -126,7 +126,7 @@ extern int copy_strings_kernel(int argc, const char *const *argv,
 extern int prepare_bprm_creds(struct linux_binprm *bprm);
 extern void install_exec_creds(struct linux_binprm *bprm);
 extern void set_binfmt(struct linux_binfmt *new);
-extern ssize_t read_code(struct file *, unsigned long, loff_t, size_t); an app
+extern ssize_t read_code(struct file *, unsigned long, loff_t, size_t);
 
 static inline bool task_is_booster(struct task_struct *tsk)
 {
