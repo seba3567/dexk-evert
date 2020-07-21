@@ -6,8 +6,12 @@
 #include <linux/string.h>
 #include <asm/byteorder.h>
 
+<<<<<<< HEAD
 #define INT32_MAX	S32_MAX
 #define UINT32_MAX	U32_MAX
+=======
+#define INT_MAX			((int)(~0U>>1))
+>>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 
 typedef __be16 fdt16_t;
 typedef __be32 fdt32_t;

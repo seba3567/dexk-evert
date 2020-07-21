@@ -430,7 +430,11 @@ static int iguanair_probe(struct usb_interface *intf,
 	int ret, pipein, pipeout;
 	struct usb_host_interface *idesc;
 
+<<<<<<< HEAD
 	idesc = intf->cur_altsetting;
+=======
+	idesc = intf->altsetting;
+>>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	if (idesc->desc.bNumEndpoints < 2)
 		return -ENODEV;
 

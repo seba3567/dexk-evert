@@ -63,8 +63,13 @@ parse_symbol() {
 		return
 	fi
 
+<<<<<<< HEAD
 	# Strip out the base of the path on each line
 	code=$(while read -r line; do echo "${line#$basepath/}"; done <<< "$code")
+=======
+	# Strip out the base of the path
+	code=${code#$basepath/}
+>>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 
 	# In the case of inlines, move everything to same line
 	code=${code//$'\n'/' '}

@@ -4,7 +4,10 @@
 #include <linux/types.h>
 #include <linux/in6.h>
 #include <linux/siphash.h>
+<<<<<<< HEAD
 #include <linux/string.h>
+=======
+>>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 #include <uapi/linux/if_ether.h>
 
 /**

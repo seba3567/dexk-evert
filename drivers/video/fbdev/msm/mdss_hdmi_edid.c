@@ -2616,6 +2616,7 @@ int hdmi_edid_parser(void *input)
 	}
 
 	for (i = cea_idx; i <= num_of_cea_blocks; i++) {
+<<<<<<< HEAD
 
 		/* check for valid CEA block */
 		if (edid_buf[EDID_BLOCK_SIZE] != 2) {
@@ -2624,6 +2625,15 @@ int hdmi_edid_parser(void *input)
 			continue;
 		}
 
+=======
+
+		/* check for valid CEA block */
+		if (edid_buf[EDID_BLOCK_SIZE] != 2) {
+			DEV_ERR("%s: Not a CEA block\n", __func__);
+			edid_buf += EDID_BLOCK_SIZE;
+			continue;
+		}
+>>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 
 		/* goto to CEA extension edid block */
 		edid_buf += EDID_BLOCK_SIZE;
@@ -3000,6 +3010,7 @@ void hdmi_edid_set_video_resolution(void *input, u32 resolution, bool reset)
 	edid_ctrl->video_resolution = resolution;
 
 	if (reset) {
+<<<<<<< HEAD
 		edid_ctrl->default_vic = resolution;
 		edid_ctrl->sink_data.num_of_elements = 1;
 		edid_ctrl->sink_data.disp_mode_list[0].video_format =
@@ -3007,6 +3018,19 @@ void hdmi_edid_set_video_resolution(void *input, u32 resolution, bool reset)
 		edid_ctrl->sink_data.disp_mode_list[0].rgb_support = true;
 		edid_ctrl->override_default_vic = true;
 
+=======
+		if (resolution == HDMI_VFRMT_UNKNOWN)
+			edid_ctrl->sink_data.num_of_elements = 0;
+		else {
+			edid_ctrl->default_vic = resolution;
+			edid_ctrl->sink_data.num_of_elements = 1;
+			edid_ctrl->sink_data.disp_mode_list[0].video_format =
+				resolution;
+			edid_ctrl->sink_data.disp_mode_list[0].rgb_support =
+				true;
+			edid_ctrl->override_default_vic = true;
+		}
+>>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	}
 } /* hdmi_edid_set_video_resolution */
 

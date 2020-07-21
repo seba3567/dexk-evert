@@ -5,8 +5,11 @@
 #include <string.h>
 
 #define INT_MAX			((int)(~0U>>1))
+<<<<<<< HEAD
 #define UINT32_MAX		((u32)~0U)
 #define INT32_MAX		((s32)(UINT32_MAX >> 1))
+=======
+>>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 
 #include "of.h"
 
