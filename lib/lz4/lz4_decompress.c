@@ -347,7 +347,7 @@ _copy_match:
 				size_t const copySize = (size_t)(lowPrefix - match);
 				size_t const restSize = length - copySize;
 
-				memcpy(op, dictEnd - copySize, copySize);
+				LZ4_memcpy(op, dictEnd - copySize, copySize);
 				op += copySize;
 				if (restSize > (size_t)(op - lowPrefix)) {
 					/* overlap copy */
@@ -357,7 +357,7 @@ _copy_match:
 					while (op < endOfMatch)
 						*op++ = *copyFrom++;
 				} else {
-					memcpy(op, lowPrefix, restSize);
+					LZ4_memcpy(op, lowPrefix, restSize);
 					op += restSize;
 				}
 			}
@@ -714,10 +714,7 @@ int lz4_decompress_unknownoutputsize(const unsigned char *src,
 		return 0;
 	else
 		return -1;
-}
 
-	return LZ4_decompress_fast_extDict(source, dest, originalSize,
-		dictStart, dictSize);
 }
 
 #ifndef STATIC
