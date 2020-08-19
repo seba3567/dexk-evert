@@ -629,6 +629,7 @@ KBUILD_AFLAGS += $(call cc-option, -no-integrated-as)
 ifeq ($(ld-name),lld)
 KBUILD_CFLAGS += -fuse-ld=lld
 endif
+KBUILD_CFLAGS   += -fno-builtin-stpcpy
 KBUILD_CPPFLAGS += -Qunused-arguments
 endif
 
