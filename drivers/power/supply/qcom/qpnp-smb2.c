@@ -526,12 +526,14 @@ static int smb2_usb_get_prop(struct power_supply *psy,
 		val->intval = get_client_vote(chg->usb_icl_votable,
 					      USB_PSY_VOTER);
 		break;
+
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
 		rc = smblib_get_prop_usb_system_temp_level(chg, val);
 		break;
 	case POWER_SUPPLY_PROP_NUM_SYSTEM_TEMP_LEVELS:
 		val->intval = chg->mmi.usb_thermal_levels;
 		break;
+
 	default:
 		pr_err("get prop %d is not supported in usb\n", psp);
 		rc = -EINVAL;
