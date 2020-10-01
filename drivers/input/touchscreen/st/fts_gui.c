@@ -58,7 +58,11 @@ ssize_t fts_i2c_wr_show(struct device *dev, struct device_attribute *attr,
 	snprintf(buff, sizeof(buff), "{");
 	strlcat(Out_buff, buff,  ARRAY_SIZE(Out_buff));
 	for (i = 0; i < (byte_count_read+2); i++) {
+<<<<<<< HEAD
 		if (!i) {
+=======
+		if (i == 0) {
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 			char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
 			snprintf(buff, sizeof(buff), "%02X", temp_byte_count_read);
 		} else if (i == 1) {
@@ -125,7 +129,11 @@ ssize_t fts_i2c_wr_store(struct device *dev, struct device_attribute *attr,
 #ifdef SCRIPTLESS_DEBUG
 	printk("%s:DATA READ\n{", __func__);
 	for (i = 0; i < (2+byte_count_read); i++) {
+<<<<<<< HEAD
 		if (!i) {
+=======
+		if (i == 0) {
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 			char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
 			printk("%02X", (unsigned int)temp_byte_count_read);
 		} else if (i == 1) {
@@ -173,7 +181,11 @@ ssize_t fts_i2c_read_show(struct device *dev, struct device_attribute *attr,
 	snprintf(buff, sizeof(buff), "{");
 	strlcat(Out_buff, buff,  ARRAY_SIZE(Out_buff));
 	for (i = 0; i < (byte_count_read+2); i++) {
+<<<<<<< HEAD
 		if (!i) {
+=======
+		if (i == 0) {
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 			char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
 			snprintf(buff, sizeof(buff), "%02X", temp_byte_count_read);
 		} else if (i == 1) {
@@ -241,7 +253,11 @@ ssize_t fts_i2c_read_store(struct device *dev, struct device_attribute *attr,
 #ifdef SCRIPTLESS_DEBUG
 	printk("%s:DATA READ\n{", __func__);
 	for (i = 0; i < (byte_count_read+2); i++) {
+<<<<<<< HEAD
 		if (!i) {
+=======
+		if (i == 0) {
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 			char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
 			printk("%02X", (unsigned int)temp_byte_count_read);
 		} else if (i == 1) {

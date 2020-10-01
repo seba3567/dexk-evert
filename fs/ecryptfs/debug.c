@@ -139,7 +139,17 @@ void ecryptfs_dump_cipher(struct ecryptfs_crypt_stat *stat)
 	if (!stat)
 		return;
 
+<<<<<<< HEAD
         ecryptfs_printk(KERN_DEBUG, "ecryptfs cipher is %s\n", stat->cipher);
+=======
+	if (stat->cipher != NULL)
+		ecryptfs_printk(KERN_DEBUG,
+				"ecryptfs cipher is %s\n", stat->cipher);
+
+	if (stat->cipher_mode != NULL)
+		ecryptfs_printk(KERN_DEBUG, "ecryptfs cipher mode is %s\n",
+				stat->cipher_mode);
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 
         ecryptfs_printk(KERN_DEBUG, "ecryptfs cipher mode is %s\n",
                         stat->cipher_mode);

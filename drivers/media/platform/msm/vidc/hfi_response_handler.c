@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016,2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2016, 2019-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1844,8 +1844,17 @@ static int hfi_process_session_rel_buf_done(u32 device_id,
 	cmd_done.size = sizeof(struct msm_vidc_cb_cmd_done);
 	cmd_done.session_id = (void *)(uintptr_t)pkt->session_id;
 	cmd_done.status = hfi_map_err_status(pkt->error_type);
+<<<<<<< HEAD
 	cmd_done.data.buffer_info.buffer_addr = *pkt->rg_buffer_info;
 	cmd_done.size = sizeof(struct hal_buffer_info);
+=======
+	if (pkt->rg_buffer_info != NULL) {
+		cmd_done.data.buffer_info.buffer_addr = *pkt->rg_buffer_info;
+		cmd_done.size = sizeof(struct hal_buffer_info);
+	} else {
+		dprintk(VIDC_ERR, "invalid payload in rel_buff_done\n");
+	}
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 
 	*info = (struct msm_vidc_cb_info) {
 		.response_type =  HAL_SESSION_RELEASE_BUFFER_DONE,

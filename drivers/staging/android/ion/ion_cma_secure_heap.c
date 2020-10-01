@@ -3,7 +3,11 @@
  *
  * Copyright (C) Linaro 2012
  * Author: <benjamin.gaignard@linaro.org> for ST-Ericsson.
+<<<<<<< HEAD
  * Copyright (c) 2013-2017, 2019, The Linux Foundation. All rights reserved.
+=======
+ * Copyright (c) 2013-2017, 2020, The Linux Foundation. All rights reserved.
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and

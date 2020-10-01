@@ -354,7 +354,11 @@ static noinline void corrupt_stack(void)
 	char data[8];
 	__lkdtm_CORRUPT_STACK(&data);
 
+<<<<<<< HEAD
 	pr_info("Corrupted stack with '%16s'...\n", data);
+=======
+	memset((void *)data, 0, sizeof(char)*8);
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 }
 
 static void execute_location(void *dst)
@@ -387,6 +391,7 @@ static void execute_user_location(void *dst)
 
 static void lkdtm_do_action(enum ctype which)
 {
+	int *ptr = NULL;
 	switch (which) {
 	case CT_PANIC:
 		panic("dumptest");
@@ -398,7 +403,11 @@ static void lkdtm_do_action(enum ctype which)
 		WARN_ON(1);
 		break;
 	case CT_EXCEPTION:
+<<<<<<< HEAD
 		*((volatile int *) 0) = 0;
+=======
+		*ptr = 0;
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 		break;
 	case CT_LOOP:
 		for (;;)

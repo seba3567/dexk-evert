@@ -29,6 +29,7 @@ static int cistpl_vers_1(struct mmc_card *card, struct sdio_func *func,
 {
 	unsigned i, nr_strings;
 	char **buffer, *string;
+	size_t buf_size = 0;
 
 	if (size < 2)
 		return 0;

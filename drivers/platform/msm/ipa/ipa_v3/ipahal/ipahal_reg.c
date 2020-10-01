@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2017, 2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1529,11 +1529,17 @@ void ipahal_get_disable_aggr_valmask(struct ipahal_reg_valmask *valmask)
 		IPAHAL_ERR("Input error\n");
 		return;
 	}
-
 	valmask->val = (1 << IPA_ENDP_INIT_AGGR_n_AGGR_FORCE_CLOSE_SHFT) &
 		IPA_ENDP_INIT_AGGR_n_AGGR_FORCE_CLOSE_BMSK;
 	valmask->mask = IPA_ENDP_INIT_AGGR_n_AGGR_FORCE_CLOSE_BMSK;
 
+<<<<<<< HEAD
+	valmask->val = (1 << IPA_ENDP_INIT_AGGR_n_AGGR_FORCE_CLOSE_SHFT) &
+		IPA_ENDP_INIT_AGGR_n_AGGR_FORCE_CLOSE_BMSK;
+	valmask->mask = IPA_ENDP_INIT_AGGR_n_AGGR_FORCE_CLOSE_BMSK;
+
+=======
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 	valmask->val |= ((0 << IPA_ENDP_INIT_AGGR_n_AGGR_EN_SHFT) &
 		IPA_ENDP_INIT_AGGR_n_AGGR_EN_BMSK);
 	valmask->mask |= IPA_ENDP_INIT_AGGR_n_AGGR_EN_BMSK;

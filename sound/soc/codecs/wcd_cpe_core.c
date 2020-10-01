@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2018,2020 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1988,7 +1988,11 @@ struct wcd_cpe_core *wcd_cpe_init(const char *img_fname,
 
 	card = codec->component.card->snd_card;
 	snprintf(proc_name, sizeof(proc_name), "%s%d%s", cpe_name, id,
+<<<<<<< HEAD
 		 state_name);
+=======
+		state_name);
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 	entry = snd_info_create_card_entry(card, proc_name,
 					   card->proc_root);
 	if (entry) {

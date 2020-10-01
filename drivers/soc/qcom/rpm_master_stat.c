@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2017, 2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -351,7 +351,7 @@ static struct msm_rpm_master_stats_platform_data
 {
 	struct msm_rpm_master_stats_platform_data *pdata;
 	struct device_node *node = dev->of_node;
-	int rc = 0, i;
+	int rc = 0, i, rpm_master_name_len = 0;
 
 	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
 	if (!pdata)
@@ -387,7 +387,7 @@ static struct msm_rpm_master_stats_platform_data
 	 * Read master names from DT
 	 */
 	for (i = 0; i < pdata->num_masters; i++) {
-		const char *master_name;
+		const char *master_name = NULL;
 
 		of_property_read_string_index(node, "qcom,masters",
 							i, &master_name);
@@ -395,9 +395,15 @@ static struct msm_rpm_master_stats_platform_data
 				strlen(master_name) + 1, GFP_KERNEL);
 		if (!pdata->masters[i])
 			goto err;
+<<<<<<< HEAD
 
 		strscpy(pdata->masters[i], master_name,
 					sizeof(pdata->masters[i]));
+=======
+		rpm_master_name_len = strlen(master_name);
+		strlcpy(pdata->masters[i], master_name,
+					strlen(pdata->masters[i]) + 1);
+>>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 	}
 	return pdata;
 err:
