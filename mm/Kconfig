@@ -767,8 +767,6 @@ config SPECULATIVE_PAGE_FAULT
 	default y
 	depends on ARCH_SUPPORTS_SPECULATIVE_PAGE_FAULT
 	depends on MMU && SMP
-<<<<<<< HEAD
-=======
 	help
 	  Try to handle user space page faults without holding the mmap_sem.
 
@@ -786,7 +784,6 @@ config SPECULATIVE_PAGE_FAULT
 config VM_MAX_READAHEAD
 	int "default max readahead window size"
 	default 128
->>>>>>> 56d698cd6d91... mm: backport speculative page fault
 	help
 	  Try to handle user space page faults without holding the mmap_sem.
 
