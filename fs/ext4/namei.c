@@ -1258,8 +1258,6 @@ static inline bool ext4_match(const struct ext4_filename *fname,
 #endif
 	if (de->name_len != len)
 		return 0;
-	if (unlikely(flags & LOOKUP_NOCASE))
-		return (strncasecmp(name, de->name, len) == 0) ? 1 : 0;
 	return (memcmp(de->name, name, len) == 0) ? 1 : 0;
 }
 
@@ -2999,7 +2997,7 @@ static int ext4_unlink(struct inode *dir, struct dentry *dentry)
 	struct ext4_dir_entry_2 *de;
 	handle_t *handle = NULL;
 
-//	trace_ext4_unlink_enter(dir, dentry);
+	trace_ext4_unlink_enter(dir, dentry);
 	/* Initialize quotas before so that eventual writes go
 	 * in separate transaction */
 	retval = dquot_initialize(dir);
@@ -3053,7 +3051,7 @@ end_unlink:
 	brelse(bh);
 	if (handle)
 		ext4_journal_stop(handle);
-//	trace_ext4_unlink_exit(dentry, retval);
+	trace_ext4_unlink_exit(dentry, retval);
 	return retval;
 }
 
