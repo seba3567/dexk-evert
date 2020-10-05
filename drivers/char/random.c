@@ -335,10 +335,7 @@
 #include <linux/ratelimit.h>
 #include <linux/syscalls.h>
 #include <linux/completion.h>
-<<<<<<< HEAD
 #include <linux/uuid.h>
-=======
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 #include <crypto/chacha20.h>
 
 #include <asm/processor.h>
@@ -489,11 +486,7 @@ struct crng_state {
 	spinlock_t	lock;
 };
 
-<<<<<<< HEAD
 static struct crng_state primary_crng = {
-=======
-struct crng_state primary_crng = {
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	.lock = __SPIN_LOCK_UNLOCKED(primary_crng.lock),
 };
 
@@ -506,7 +499,6 @@ struct crng_state primary_crng = {
  * its value (from 0->1->2).
  */
 static int crng_init = 0;
-<<<<<<< HEAD
 #define crng_ready() (likely(crng_init > 1))
 static int crng_init_cnt = 0;
 static unsigned long crng_global_init_time = 0;
@@ -527,13 +519,6 @@ static int ratelimit_disable __read_mostly;
 
 module_param_named(ratelimit_disable, ratelimit_disable, int, 0644);
 MODULE_PARM_DESC(ratelimit_disable, "Disable random ratelimit suppression");
-=======
-#define crng_ready() (likely(crng_init > 0))
-static int crng_init_cnt = 0;
-#define CRNG_INIT_CNT_THRESH (2*CHACHA20_KEY_SIZE)
-static void extract_crng(__u8 out[CHACHA20_BLOCK_SIZE]);
-static void process_random_ready_list(void);
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 
 /**********************************************************************
  *
@@ -792,12 +777,8 @@ retry:
 
 	if (has_initialized) {
 		r->initialized = 1;
-<<<<<<< HEAD
 		wake_up_interruptible(&random_read_wait);
 		kill_fasync(&fasync, SIGIO, POLL_IN);
-=======
-		r->entropy_total = 0;
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	}
 
 	trace_credit_entropy_bits(r->name, nbits,
@@ -821,18 +802,12 @@ retry:
 			return;
 		}
 
-		if (crng_init < 2 && entropy_bits >= 128) {
-			crng_reseed(&primary_crng, r);
-			entropy_bits = r->entropy_count >> ENTROPY_SHIFT;
-		}
-
 		/* should we wake readers? */
 		if (entropy_bits >= random_read_wakeup_bits &&
 		    wq_has_sleeper(&random_read_wait)) {
 			wake_up_interruptible(&random_read_wait);
 			kill_fasync(&fasync, SIGIO, POLL_IN);
 		}
-<<<<<<< HEAD
 		/* If the input pool is getting full, and the blocking
 		 * pool has room, send some entropy to the blocking
 		 * pool.
@@ -841,22 +816,6 @@ retry:
 		    (ENTROPY_BITS(r) > 6 * r->poolinfo->poolbytes) &&
 		    (ENTROPY_BITS(other) <= 6 * other->poolinfo->poolbytes))
 			schedule_work(&other->push_work);
-=======
-		/* If the input pool is getting full, send some
-		 * entropy to the blocking pool until it is 75% full.
-		 */
-		if (entropy_bits > random_write_wakeup_bits &&
-		    r->initialized &&
-		    r->entropy_total >= 2*random_read_wakeup_bits) {
-			struct entropy_store *other = &blocking_pool;
-
-			if (other->entropy_count <=
-			    3 * other->poolinfo->poolfracbits / 4) {
-				schedule_work(&other->push_work);
-				r->entropy_total = 0;
-			}
-		}
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	}
 }
 
@@ -884,7 +843,6 @@ static int credit_entropy_bits_safe(struct entropy_store *r, int nbits)
 
 static DECLARE_WAIT_QUEUE_HEAD(crng_init_wait);
 
-<<<<<<< HEAD
 #ifdef CONFIG_NUMA
 /*
  * Hack to deal with crazy userspace progams when they are all trying
@@ -909,11 +867,6 @@ static void crng_initialize(struct crng_state *crng)
 {
 	int		i;
 	int		arch_init = 1;
-=======
-static void crng_initialize(struct crng_state *crng)
-{
-	int		i;
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	unsigned long	rv;
 
 	memcpy(&crng->state[0], "expand 32-byte k", 16);
@@ -921,7 +874,6 @@ static void crng_initialize(struct crng_state *crng)
 		_extract_entropy(&input_pool, &crng->state[4],
 				 sizeof(__u32) * 12, 0);
 	else
-<<<<<<< HEAD
 		_get_random_bytes(&crng->state[4], sizeof(__u32) * 12);
 	for (i = 4; i < 16; i++) {
 		if (!arch_get_random_seed_long(&rv) &&
@@ -973,18 +925,6 @@ static void numa_crng_init(void)
 static void numa_crng_init(void) {}
 #endif
 
-=======
-		get_random_bytes(&crng->state[4], sizeof(__u32) * 12);
-	for (i = 4; i < 16; i++) {
-		if (!arch_get_random_seed_long(&rv) &&
-		    !arch_get_random_long(&rv))
-			rv = random_get_entropy();
-		crng->state[i] ^= rv;
-	}
-	crng->init_time = jiffies - CRNG_RESEED_INTERVAL - 1;
-}
-
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 static int crng_fast_load(const char *cp, size_t len)
 {
 	unsigned long flags;
@@ -992,11 +932,7 @@ static int crng_fast_load(const char *cp, size_t len)
 
 	if (!spin_trylock_irqsave(&primary_crng.lock, flags))
 		return 0;
-<<<<<<< HEAD
 	if (crng_init != 0) {
-=======
-	if (crng_ready()) {
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 		spin_unlock_irqrestore(&primary_crng.lock, flags);
 		return 0;
 	}
@@ -1005,21 +941,13 @@ static int crng_fast_load(const char *cp, size_t len)
 		p[crng_init_cnt % CHACHA20_KEY_SIZE] ^= *cp;
 		cp++; crng_init_cnt++; len--;
 	}
-<<<<<<< HEAD
 	spin_unlock_irqrestore(&primary_crng.lock, flags);
 	if (crng_init_cnt >= CRNG_INIT_CNT_THRESH) {
 		invalidate_batched_entropy();
-=======
-	if (crng_init_cnt >= CRNG_INIT_CNT_THRESH) {
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 		crng_init = 1;
 		wake_up_interruptible(&crng_init_wait);
 		pr_notice("random: fast init done\n");
 	}
-<<<<<<< HEAD
-=======
-	spin_unlock_irqrestore(&primary_crng.lock, flags);
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	return 1;
 }
 
@@ -1036,18 +964,12 @@ static void crng_reseed(struct crng_state *crng, struct entropy_store *r)
 		num = extract_entropy(r, &buf, 32, 16, 0);
 		if (num == 0)
 			return;
-<<<<<<< HEAD
 	} else {
 		_extract_crng(&primary_crng, buf.block);
 		_crng_backtrack_protect(&primary_crng, buf.block,
 					CHACHA20_KEY_SIZE);
 	}
 	spin_lock_irqsave(&crng->lock, flags);
-=======
-	} else
-		extract_crng(buf.block);
-	spin_lock_irqsave(&primary_crng.lock, flags);
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	for (i = 0; i < 8; i++) {
 		unsigned long	rv;
 		if (!arch_get_random_seed_long(&rv) &&
@@ -1057,19 +979,14 @@ static void crng_reseed(struct crng_state *crng, struct entropy_store *r)
 	}
 	memzero_explicit(&buf, sizeof(buf));
 	crng->init_time = jiffies;
-<<<<<<< HEAD
 	spin_unlock_irqrestore(&crng->lock, flags);
 	if (crng == &primary_crng && crng_init < 2) {
 		invalidate_batched_entropy();
 		numa_crng_init();
-=======
-	if (crng == &primary_crng && crng_init < 2) {
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 		crng_init = 2;
 		process_random_ready_list();
 		wake_up_interruptible(&crng_init_wait);
 		pr_notice("random: crng init done\n");
-<<<<<<< HEAD
 		if (unseeded_warning.missed) {
 			pr_notice("random: %d get_random_xx warning(s) missed "
 				  "due to ratelimiting\n",
@@ -1094,25 +1011,6 @@ static void _extract_crng(struct crng_state *crng,
 	    (time_after(crng_global_init_time, crng->init_time) ||
 	     time_after(jiffies, crng->init_time + CRNG_RESEED_INTERVAL)))
 		crng_reseed(crng, crng == &primary_crng ? &input_pool : NULL);
-=======
-	}
-	spin_unlock_irqrestore(&primary_crng.lock, flags);
-}
-
-static inline void crng_wait_ready(void)
-{
-	wait_event_interruptible(crng_init_wait, crng_ready());
-}
-
-static void extract_crng(__u8 out[CHACHA20_BLOCK_SIZE])
-{
-	unsigned long v, flags;
-	struct crng_state *crng = &primary_crng;
-
-	if (crng_init > 1 &&
-	    time_after(jiffies, crng->init_time + CRNG_RESEED_INTERVAL))
-		crng_reseed(crng, &input_pool);
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	spin_lock_irqsave(&crng->lock, flags);
 	if (arch_get_random_long(&v))
 		crng->state[14] ^= v;
@@ -1122,7 +1020,6 @@ static void extract_crng(__u8 out[CHACHA20_BLOCK_SIZE])
 	spin_unlock_irqrestore(&crng->lock, flags);
 }
 
-<<<<<<< HEAD
 static void extract_crng(__u8 out[CHACHA20_BLOCK_SIZE])
 {
 	struct crng_state *crng = NULL;
@@ -1177,12 +1074,6 @@ static ssize_t extract_crng_user(void __user *buf, size_t nbytes)
 {
 	ssize_t ret = 0, i = CHACHA20_BLOCK_SIZE;
 	__u8 tmp[CHACHA20_BLOCK_SIZE] __aligned(4);
-=======
-static ssize_t extract_crng_user(void __user *buf, size_t nbytes)
-{
-	ssize_t ret = 0, i;
-	__u8 tmp[CHACHA20_BLOCK_SIZE];
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	int large_request = (nbytes > 256);
 
 	while (nbytes) {
@@ -1206,10 +1097,7 @@ static ssize_t extract_crng_user(void __user *buf, size_t nbytes)
 		buf += i;
 		ret += i;
 	}
-<<<<<<< HEAD
 	crng_backtrack_protect(tmp, i);
-=======
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 
 	/* Wipe data just written to memory */
 	memzero_explicit(tmp, sizeof(tmp));
@@ -1395,11 +1283,7 @@ void add_interrupt_randomness(int irq, int irq_flags)
 	add_interrupt_bench(cycles);
 	this_cpu_add(net_rand_state.s1, fast_pool->pool[cycles & 3]);
 
-<<<<<<< HEAD
 	if (unlikely(crng_init == 0)) {
-=======
-	if (!crng_ready()) {
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 		if ((fast_pool->count >= 64) &&
 		    crng_fast_load((char *) fast_pool->pool,
 				   sizeof(fast_pool->pool))) {
@@ -1771,18 +1655,8 @@ static void _warn_unseeded_randomness(const char *func_name, void *caller,
  */
 static void _get_random_bytes(void *buf, int nbytes)
 {
-<<<<<<< HEAD
 	__u8 tmp[CHACHA20_BLOCK_SIZE] __aligned(4);
 
-=======
-	__u8 tmp[CHACHA20_BLOCK_SIZE];
-
-#if DEBUG_RANDOM_BOOT > 0
-	if (!crng_ready())
-		printk(KERN_NOTICE "random: %pF get_random_bytes called "
-		       "with crng_init = %d\n", (void *) _RET_IP_, crng_init);
-#endif
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	trace_get_random_bytes(nbytes, _RET_IP_);
 
 	while (nbytes >= CHACHA20_BLOCK_SIZE) {
@@ -1794,7 +1668,6 @@ static void _get_random_bytes(void *buf, int nbytes)
 	if (nbytes > 0) {
 		extract_crng(tmp);
 		memcpy(buf, tmp, nbytes);
-<<<<<<< HEAD
 		crng_backtrack_protect(tmp, nbytes);
 	} else
 		crng_backtrack_protect(tmp, CHACHA20_BLOCK_SIZE);
@@ -1807,10 +1680,6 @@ void get_random_bytes(void *buf, int nbytes)
 
 	warn_unseeded_randomness(&previous);
 	_get_random_bytes(buf, nbytes);
-=======
-		memzero_explicit(tmp, nbytes);
-	}
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 }
 EXPORT_SYMBOL(get_random_bytes);
 
@@ -1935,12 +1804,7 @@ int __must_check get_random_bytes_arch(void *buf, int nbytes)
 		left -= chunk;
 	}
 
-<<<<<<< HEAD
 	return nbytes - left;
-=======
-	if (nbytes)
-		get_random_bytes(p, nbytes);
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 }
 EXPORT_SYMBOL(get_random_bytes_arch);
 
@@ -1985,14 +1849,11 @@ static int rand_initialize(void)
 	init_std_data(&input_pool);
 	init_std_data(&blocking_pool);
 	crng_initialize(&primary_crng);
-<<<<<<< HEAD
 	crng_global_init_time = jiffies;
 	if (ratelimit_disable) {
 		urandom_warning.interval = 0;
 		unseeded_warning.interval = 0;
 	}
-=======
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	return 0;
 }
 early_initcall(rand_initialize);
@@ -2060,16 +1921,10 @@ urandom_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
 
 	if (!crng_ready() && maxwarn > 0) {
 		maxwarn--;
-<<<<<<< HEAD
 		if (__ratelimit(&urandom_warning))
 			printk(KERN_NOTICE "random: %s: uninitialized "
 			       "urandom read (%zd bytes read)\n",
 			       current->comm, nbytes);
-=======
-		printk(KERN_NOTICE "random: %s: uninitialized urandom read "
-		       "(%zd bytes read)\n",
-		       current->comm, nbytes);
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 		spin_lock_irqsave(&primary_crng.lock, flags);
 		crng_init_cnt = 0;
 		spin_unlock_irqrestore(&primary_crng.lock, flags);
@@ -2233,15 +2088,9 @@ SYSCALL_DEFINE3(getrandom, char __user *, buf, size_t, count,
 	if (!crng_ready()) {
 		if (flags & GRND_NONBLOCK)
 			return -EAGAIN;
-<<<<<<< HEAD
 		ret = wait_for_random_bytes();
 		if (unlikely(ret))
 			return ret;
-=======
-		crng_wait_ready();
-		if (signal_pending(current))
-			return -ERESTARTSYS;
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 	}
 	return urandom_read(NULL, buf, count, NULL);
 }
@@ -2519,11 +2368,7 @@ void add_hwgenerator_randomness(const char *buffer, size_t count,
 {
 	struct entropy_store *poolp = &input_pool;
 
-<<<<<<< HEAD
 	if (unlikely(crng_init == 0)) {
-=======
-	if (!crng_ready()) {
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 		crng_fast_load(buffer, count);
 		return;
 	}
@@ -2532,12 +2377,8 @@ void add_hwgenerator_randomness(const char *buffer, size_t count,
 	 * We'll be woken up again once below random_write_wakeup_thresh,
 	 * or when the calling thread is about to terminate.
 	 */
-<<<<<<< HEAD
 	wait_event_freezable(random_write_wait,
 			kthread_should_stop() ||
-=======
-	wait_event_interruptible(random_write_wait, kthread_should_stop() ||
->>>>>>> 80e8f30444be... random: replace non-blocking pool with a Chacha20-based CRNG
 			ENTROPY_BITS(&input_pool) <= random_write_wakeup_bits);
 	mix_pool_bytes(poolp, buffer, count);
 	credit_entropy_bits(poolp, entropy);
