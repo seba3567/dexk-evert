@@ -38,7 +38,6 @@
 		__func__, ##__VA_ARGS__)	\
 
 #ifdef CONFIG_DEBUG_SMB_LIB
-<<<<<<< HEAD
 #define smblib_dbg(chg, reason, fmt, ...)			\
 	do {							\
 		if (*chg->debug_mask & (reason))		\
@@ -61,8 +60,6 @@
 		"ERR:%s: " fmt, __func__, ##__VA_ARGS__); \
 	} while (0)
 
-=======
->>>>>>> d3709ca6702f... power: smb-lib: Silence spamming debugging
 #define smblib_dbg(chg, reason, fmt, ...)			\
 	do {							\
 		if (*chg->debug_mask & (reason))		\
@@ -78,7 +75,6 @@
 			ipc_log_string(chg->ipc_log,		\
 			"INFO:%s: " fmt, __func__, ##__VA_ARGS__); \
 	} while (0)
-<<<<<<< HEAD
 #endif
 
 #define QPNP_LOG_PAGES (50)
@@ -89,11 +85,6 @@
 #define EB_SND_LOW BIT(1)
 #define EB_SND_NEVER BIT(0)
 static void mmi_check_extbat_ability(struct smb_charger *chip, char *able);
-=======
-#else
-#define smblib_dbg(chg, reason, fmt, ...) do {} while (0)
-#endif
->>>>>>> d3709ca6702f... power: smb-lib: Silence spamming debugging
 
 static bool is_secure(struct smb_charger *chg, int addr)
 {
@@ -3751,7 +3742,6 @@ int smblib_get_prop_slave_current_now(struct smb_charger *chg,
 irqreturn_t smblib_handle_debug(int irq, void *data)
 {
 #ifdef CONFIG_DEBUG_SMB_LIB
-<<<<<<< HEAD
 	struct smb_irq_data *irq_data = data;
 	struct smb_charger *chg = irq_data->parent_data;
 
@@ -3762,8 +3752,6 @@ irqreturn_t smblib_handle_debug(int irq, void *data)
 
 irqreturn_t smblib_handle_usbin_collapse(int irq, void *data)
 {
-=======
->>>>>>> d3709ca6702f... power: smb-lib: Silence spamming debugging
 	struct smb_irq_data *irq_data = data;
 	struct smb_charger *chg = irq_data->parent_data;
 	int rc;
@@ -3781,7 +3769,6 @@ irqreturn_t smblib_handle_usbin_collapse(int irq, void *data)
 				      msecs_to_jiffies(100));
 	}
 	smblib_dbg(chg, PR_INTERRUPT, "IRQ: %s\n", irq_data->name);
-#endif
 	return IRQ_HANDLED;
 }
 
