@@ -634,43 +634,17 @@ static void free_msg(struct mlx5_core_dev *dev, struct mlx5_cmd_msg *msg);
 static void mlx5_free_cmd_msg(struct mlx5_core_dev *dev,
 			      struct mlx5_cmd_msg *msg);
 
-static u16 msg_to_opcode(struct mlx5_cmd_msg *in)
-{
-	struct mlx5_inbox_hdr *hdr = (struct mlx5_inbox_hdr *)(in->first.data);
-
-	return be16_to_cpu(hdr->opcode);
-}
-
-static void cb_timeout_handler(struct work_struct *work)
-{
-	struct delayed_work *dwork = container_of(work, struct delayed_work,
-						  work);
-	struct mlx5_cmd_work_ent *ent = container_of(dwork,
-						     struct mlx5_cmd_work_ent,
-						     cb_timeout_work);
-	struct mlx5_core_dev *dev = container_of(ent->cmd, struct mlx5_core_dev,
-						 cmd);
-
-	ent->ret = -ETIMEDOUT;
-	mlx5_core_warn(dev, "%s(0x%x) timeout. Will cause a leak of a command resource\n",
-		       mlx5_command_str(msg_to_opcode(ent->in)),
-		       msg_to_opcode(ent->in));
-	mlx5_cmd_comp_handler(dev, 1UL << ent->idx);
-}
-
 static void cmd_work_handler(struct work_struct *work)
 {
 	struct mlx5_cmd_work_ent *ent = container_of(work, struct mlx5_cmd_work_ent, work);
 	struct mlx5_cmd *cmd = ent->cmd;
 	struct mlx5_core_dev *dev = container_of(cmd, struct mlx5_core_dev, cmd);
-	unsigned long cb_timeout = msecs_to_jiffies(MLX5_CMD_TIMEOUT_MSEC);
 	struct mlx5_cmd_layout *lay;
 	struct semaphore *sem;
 	unsigned long flags;
 	int alloc_ret;
 	int cmd_mode;
 
-	complete(&ent->handling);
 	sem = ent->page_queue ? &cmd->pages_sem : &cmd->sem;
 	down(sem);
 	if (!ent->page_queue) {
@@ -717,9 +691,6 @@ static void cmd_work_handler(struct work_struct *work)
 	ent->ts1 = ktime_get_ns();
 	cmd_mode = cmd->mode;
 
-	if (ent->callback)
-		schedule_delayed_work(&ent->cb_timeout_work, cb_timeout);
-
 	/* ring doorbell after the descriptor is valid */
 	mlx5_core_dbg(dev, "writing 0x%x to command doorbell\n", 1 << ent->idx);
 	wmb();
@@ -764,17 +735,18 @@ static const char *deliv_status_to_str(u8 status)
 	}
 }
 
+static u16 msg_to_opcode(struct mlx5_cmd_msg *in)
+{
+	struct mlx5_inbox_hdr *hdr = (struct mlx5_inbox_hdr *)(in->first.data);
+
+	return be16_to_cpu(hdr->opcode);
+}
+
 static int wait_func(struct mlx5_core_dev *dev, struct mlx5_cmd_work_ent *ent)
 {
 	unsigned long timeout = msecs_to_jiffies(MLX5_CMD_TIMEOUT_MSEC);
 	struct mlx5_cmd *cmd = &dev->cmd;
 	int err;
-
-	if (!wait_for_completion_timeout(&ent->handling, timeout) &&
-	    cancel_work_sync(&ent->work)) {
-		ent->ret = -ECANCELED;
-		goto out_err;
-	}
 
 	if (cmd->mode == CMD_MODE_POLLING) {
 		wait_for_completion(&ent->done);
@@ -783,18 +755,10 @@ static int wait_func(struct mlx5_core_dev *dev, struct mlx5_cmd_work_ent *ent)
 		mlx5_cmd_comp_handler(dev, 1UL << ent->idx);
 	}
 
-<<<<<<< HEAD
-=======
-out_err:
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 	err = ent->ret;
 
 	if (err == -ETIMEDOUT) {
 		mlx5_core_warn(dev, "%s(0x%x) timeout. Will cause a leak of a command resource\n",
-			       mlx5_command_str(msg_to_opcode(ent->in)),
-			       msg_to_opcode(ent->in));
-	} else if (err == -ECANCELED) {
-		mlx5_core_warn(dev, "%s(0x%x) canceled on out of queue timeout.\n",
 			       mlx5_command_str(msg_to_opcode(ent->in)),
 			       msg_to_opcode(ent->in));
 	}
@@ -841,11 +805,9 @@ static int mlx5_cmd_invoke(struct mlx5_core_dev *dev, struct mlx5_cmd_msg *in,
 
 	ent->token = token;
 
-	init_completion(&ent->handling);
 	if (!callback)
 		init_completion(&ent->done);
 
-	INIT_DELAYED_WORK(&ent->cb_timeout_work, cb_timeout_handler);
 	INIT_WORK(&ent->work, cmd_work_handler);
 	if (page_queue) {
 		cmd_work_handler(&ent->work);
@@ -857,11 +819,6 @@ static int mlx5_cmd_invoke(struct mlx5_core_dev *dev, struct mlx5_cmd_msg *in,
 
 	if (callback)
 		goto out;
-<<<<<<< HEAD
-=======
-	if (err == -ECANCELED)
-		goto out_free;
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 
 	err = wait_func(dev, ent);
 	if (err == -ETIMEDOUT)
@@ -1330,8 +1287,6 @@ void mlx5_cmd_comp_handler(struct mlx5_core_dev *dev, u64 vec)
 			struct semaphore *sem;
 
 			ent = cmd->ent_arr[i];
-			if (ent->callback)
-				cancel_delayed_work(&ent->cb_timeout_work);
 			if (ent->page_queue)
 				sem = &cmd->pages_sem;
 			else

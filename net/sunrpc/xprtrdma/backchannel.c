@@ -42,8 +42,8 @@ static int rpcrdma_bc_setup_rqst(struct rpcrdma_xprt *r_xprt,
 	size_t size;
 
 	req = rpcrdma_create_req(r_xprt);
-	if (IS_ERR(req))
-		return PTR_ERR(req);
+	if (!req)
+		return -ENOMEM;
 	req->rl_backchannel = true;
 
 	size = RPCRDMA_INLINE_WRITE_THRESHOLD(rqst);
@@ -84,24 +84,19 @@ out_fail:
 static int rpcrdma_bc_setup_reps(struct rpcrdma_xprt *r_xprt,
 				 unsigned int count)
 {
-<<<<<<< HEAD
 	struct rpcrdma_buffer *buffers = &r_xprt->rx_buf;
 	unsigned long flags;
-=======
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 	int rc = 0;
 
 	while (count--) {
 		rc = rpcrdma_create_rep(r_xprt);
 		if (rc)
 			break;
-<<<<<<< HEAD
 		spin_lock_irqsave(&buffers->rb_lock, flags);
 		list_add(&rep->rr_list, &buffers->rb_recv_bufs);
 		spin_unlock_irqrestore(&buffers->rb_lock, flags);
-=======
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 	}
+
 	return rc;
 }
 
@@ -340,8 +335,6 @@ void rpcrdma_bc_receive_call(struct rpcrdma_xprt *r_xprt,
 	rqst->rq_reply_bytes_recvd = 0;
 	rqst->rq_bytes_sent = 0;
 	rqst->rq_xid = headerp->rm_xid;
-
-	rqst->rq_private_buf.len = size;
 	set_bit(RPC_BC_PA_IN_USE, &rqst->rq_bc_pa_state);
 
 	buf = &rqst->rq_rcv_buf;

@@ -753,10 +753,7 @@ static const struct dmi_system_id __initconst i8042_dmi_reset_table[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "P65xRP"),
 		},
 	},
-<<<<<<< HEAD
 
-=======
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 	{
 		/* Lenovo ThinkPad Twist S230u */
 		.matches = {
@@ -772,10 +769,7 @@ static const struct dmi_system_id __initconst i8042_dmi_reset_table[] = {
 			DMI_MATCH(DMI_PRODUCT_VERSION, "EL07R4"),
 		},
 	},
-<<<<<<< HEAD
 
-=======
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 	{ }
 };
 

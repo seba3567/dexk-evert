@@ -586,7 +586,6 @@ ext4_xattr_release_block(handle_t *handle, struct inode *inode,
 				 EXT4_FREE_BLOCKS_METADATA |
 				 EXT4_FREE_BLOCKS_FORGET);
 	} else {
-<<<<<<< HEAD
 		ref--;
 		BHDR(bh)->h_refcount = cpu_to_le32(ref);
 		if (ref == EXT4_XATTR_REFCOUNT_MAX - 1) {
@@ -599,11 +598,6 @@ ext4_xattr_release_block(handle_t *handle, struct inode *inode,
 				mb_cache_entry_put(ext4_mb_cache, ce);
 			}
 		}
-=======
-		le32_add_cpu(&BHDR(bh)->h_refcount, -1);
-		if (ce)
-			mb_cache_entry_release(ce);
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 
 		ext4_xattr_block_csum_set(inode, bh);
 		/*
@@ -958,11 +952,7 @@ inserted:
 				if (ref >= EXT4_XATTR_REFCOUNT_MAX)
 					ce->e_reusable = 0;
 				ea_bdebug(new_bh, "reusing; refcount now=%d",
-<<<<<<< HEAD
 					  ref);
-=======
-					le32_to_cpu(BHDR(new_bh)->h_refcount));
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 				ext4_xattr_block_csum_set(inode, new_bh);
 				unlock_buffer(new_bh);
 				error = ext4_handle_dirty_metadata(handle,

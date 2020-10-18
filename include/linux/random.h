@@ -42,7 +42,6 @@ extern int __must_check get_random_bytes_arch(void *buf, int nbytes);
 extern const struct file_operations random_fops, urandom_fops;
 #endif
 
-<<<<<<< HEAD
 u32 get_random_u32(void);
 u64 get_random_u64(void);
 static inline unsigned int get_random_int(void)
@@ -59,11 +58,6 @@ static inline unsigned long get_random_long(void)
 }
 
 unsigned long randomize_page(unsigned long start, unsigned long range);
-=======
-unsigned int get_random_int(void);
-unsigned long get_random_long(void);
-unsigned long randomize_range(unsigned long start, unsigned long end, unsigned long len);
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 
 /*
  * This is designed to be standalone for just prandom

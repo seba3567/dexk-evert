@@ -1310,11 +1310,7 @@ static int _request_firmware(struct fw_desc *desc)
 	if (!desc->firmware_p)
 		return -EINVAL;
 
-<<<<<<< HEAD
 	if (!desc->name || desc->name[0] == '\0') {
-=======
-	if (!name || name[0] == '\0') {
->>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 		ret = -EINVAL;
 		goto out;
 	}
