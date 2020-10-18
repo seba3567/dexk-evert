@@ -2046,6 +2046,11 @@ static int __unregister(struct device *dev, void *null)
  */
 void spi_unregister_master(struct spi_master *master)
 {
+<<<<<<< HEAD
+=======
+	device_for_each_child(&master->dev, NULL, __unregister);
+
+>>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 	if (master->queued) {
 		if (spi_destroy_queue(master))
 			dev_err(&master->dev, "queue remove failed\n");

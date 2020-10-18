@@ -1282,6 +1282,7 @@ void add_interrupt_randomness(int irq, int irq_flags)
 	fast_mix(fast_pool);
 	add_interrupt_bench(cycles);
 	this_cpu_add(net_rand_state.s1, fast_pool->pool[cycles & 3]);
+<<<<<<< HEAD
 
 	if (unlikely(crng_init == 0)) {
 		if ((fast_pool->count >= 64) &&
@@ -1292,6 +1293,8 @@ void add_interrupt_randomness(int irq, int irq_flags)
 		}
 		return;
 	}
+=======
+>>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 
 	if ((fast_pool->count < 64) &&
 	    !time_after(now, fast_pool->last + HZ))
@@ -2258,6 +2261,7 @@ u64 get_random_u64(void)
 	struct batched_entropy *batch;
 	static void *previous;
 
+<<<<<<< HEAD
 #if BITS_PER_LONG == 64
 	if (arch_get_random_long((unsigned long *)&ret))
 		return ret;
@@ -2268,6 +2272,14 @@ u64 get_random_u64(void)
 #endif
 
 	warn_unseeded_randomness(&previous);
+=======
+	hash = get_cpu_var(get_random_int_hash);
+
+	hash[0] += current->pid + jiffies + random_get_entropy();
+	md5_transform(hash, random_int_secret);
+	ret = hash[0];
+	put_cpu_var(get_random_int_hash);
+>>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 
 	batch = raw_cpu_ptr(&batched_entropy_u64);
 	spin_lock_irqsave(&batch->batch_lock, flags);
@@ -2291,10 +2303,19 @@ u32 get_random_u32(void)
 	struct batched_entropy *batch;
 	static void *previous;
 
+<<<<<<< HEAD
 	if (arch_get_random_int(&ret))
 		return ret;
 
 	warn_unseeded_randomness(&previous);
+=======
+	hash = get_cpu_var(get_random_int_hash);
+
+	hash[0] += current->pid + jiffies + random_get_entropy();
+	md5_transform(hash, random_int_secret);
+	ret = *(unsigned long *)hash;
+	put_cpu_var(get_random_int_hash);
+>>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 
 	batch = raw_cpu_ptr(&batched_entropy_u32);
 	spin_lock_irqsave(&batch->batch_lock, flags);

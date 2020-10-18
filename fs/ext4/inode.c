@@ -3393,9 +3393,13 @@ static ssize_t ext4_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
 			return 0;
 	}
 
+<<<<<<< HEAD
 #if defined(CONFIG_EXT4_FS_ENCRYPTION) && \
 !defined(CONFIG_EXT4_FS_ICE_ENCRYPTION)
 
+=======
+#ifdef CONFIG_EXT4_FS_ENCRYPTION
+>>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 	if (ext4_encrypted_inode(inode) && S_ISREG(inode->i_mode))
 		return 0;
 #endif

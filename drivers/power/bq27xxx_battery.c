@@ -198,10 +198,10 @@ static u8 bq27500_regs[] = {
 	INVALID_REG_ADDR,	/* TTECP - NA	*/
 	0x0c,	/* NAC		*/
 	0x12,	/* LMD(FCC)	*/
-	0x1e,	/* CYCT		*/
+	0x2a,	/* CYCT		*/
 	INVALID_REG_ADDR,	/* AE - NA	*/
-	0x20,	/* SOC(RSOC)	*/
-	0x2e,	/* DCAP(ILMD)	*/
+	0x2c,	/* SOC(RSOC)	*/
+	0x3c,	/* DCAP(ILMD)	*/
 	INVALID_REG_ADDR,	/* AP - NA	*/
 };
 
@@ -242,7 +242,7 @@ static u8 bq27541_regs[] = {
 	INVALID_REG_ADDR,	/* AE - NA	*/
 	0x2c,	/* SOC(RSOC)	*/
 	0x3c,	/* DCAP		*/
-	0x76,	/* AP		*/
+	0x24,	/* AP		*/
 };
 
 static u8 bq27545_regs[] = {

@@ -3021,11 +3021,16 @@ static void binder_transaction(struct binder_proc *proc,
 			return_error_line = __LINE__;
 			goto err_dead_binder;
 		}
+<<<<<<< HEAD
 		e->to_node = target_node->debug_id;
 		if (WARN_ON(proc == target_proc)) {
 			return_error = BR_FAILED_REPLY;
 			return_error_param = -EINVAL;
 			return_error_line = __LINE__;
+=======
+		if (WARN_ON(proc == target_proc)) {
+			return_error = BR_FAILED_REPLY;
+>>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 			goto err_invalid_target_handle;
 		}
 		if (security_binder_transaction(proc->tsk,
@@ -3554,6 +3559,7 @@ static int binder_thread_write(struct binder_proc *proc,
 				return -EFAULT;
 
 			ptr += sizeof(uint32_t);
+<<<<<<< HEAD
 			ret = -1;
 			if (increment && !target) {
 				struct binder_node *ctx_mgr_node;
@@ -3569,6 +3575,21 @@ static int binder_thread_write(struct binder_proc *proc,
 					ret = binder_inc_ref_for_node(
 							proc, ctx_mgr_node,
 							strong, NULL, &rdata);
+=======
+			if (target == 0 && binder_context_mgr_node &&
+			    (cmd == BC_INCREFS || cmd == BC_ACQUIRE)) {
+				if (binder_context_mgr_node->proc == proc) {
+					binder_user_error("%d:%d context manager tried to acquire desc 0\n",
+							  proc->pid, thread->pid);
+					return -EINVAL;
+				}
+				ref = binder_get_ref_for_node(proc,
+					       binder_context_mgr_node);
+				if (ref->desc != target) {
+					binder_user_error("%d:%d tried to acquire reference to desc 0, got %d instead\n",
+						proc->pid, thread->pid,
+						ref->desc);
+>>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 				}
 				mutex_unlock(&context->context_mgr_node_lock);
 			}

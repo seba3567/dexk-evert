@@ -1637,9 +1637,12 @@ static int do_execveat_common(int fd, struct filename *filename,
 	if (retval < 0)
 		goto out;
 
+<<<<<<< HEAD
 	/* exec_binprm can release file and it may be freed */
 	is_su = d_is_su(file->f_path.dentry);
 
+=======
+>>>>>>> dcd71672c1f8f2a6a55eb8dfdf6691aabd9f3076
 	retval = exec_binprm(bprm);
 	if (retval < 0)
 		goto out;
