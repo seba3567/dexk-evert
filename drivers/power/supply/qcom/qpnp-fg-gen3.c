@@ -4082,6 +4082,8 @@ static int fg_psy_get_property(struct power_supply *psy,
 	int rc = 0;
 
 	switch (psp) {
+<<<<<<< HEAD
+=======
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
 	case POWER_SUPPLY_PROP_RESISTANCE_ID:
 	case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
@@ -4109,6 +4111,7 @@ static int fg_psy_get_property(struct power_supply *psy,
 	}
 
 	switch (psp) {
+>>>>>>> fd2c1fa1c928... qpnp-fg-gen3: Don't ratelimit interaction related props
 	case POWER_SUPPLY_PROP_CAPACITY:
 		rc = fg_get_prop_capacity(chip, &pval->intval);
 		break;
