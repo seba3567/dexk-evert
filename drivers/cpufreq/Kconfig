@@ -25,6 +25,11 @@ config CPU_FREQ_BOOST_SW
 	bool
 	depends on THERMAL
 
+config CPU_FREQ_GOV_DEXK_DEMAND
+	tristate "'dexk_demand' cpufreq governor"
+        depends on CPU_FREQ
+
+
 config CPU_FREQ_STAT
 	tristate "CPU frequency translation statistics"
 	default y
@@ -438,4 +443,9 @@ config QORIQ_CPUFREQ
 	  which are capable of changing the CPU's frequency dynamically.
 
 endif
+
+config CPU_FREQ_DEFAULT_GOV_DEXK_DEMAND
+	bool "dexkdemand"
+	select CPU_FREQ_GOV_DEXK_DEMAND
+
 endmenu
