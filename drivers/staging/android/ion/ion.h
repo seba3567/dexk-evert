@@ -2,7 +2,7 @@
  * drivers/staging/android/ion/ion.h
  *
  * Copyright (C) 2011 Google, Inc.
- * Copyright (c) 2011-2014, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014,2017 The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -265,8 +265,6 @@ static inline void *ion_import_dma_buf(struct ion_client *client, int fd)
 {
 	return __ion_import_dma_buf(fd);
 }
-<<<<<<< HEAD
-=======
 
 /**
  * ion_dma_buf_is_secure() - Returns true if the dma buf is secure
@@ -277,7 +275,6 @@ static inline void *ion_import_dma_buf(struct ion_client *client, int fd)
  * a secure heap.
  */
 bool ion_dma_buf_is_secure(struct dma_buf *dmabuf);
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 #else
 static inline void ion_reserve(struct ion_platform_data *data)
@@ -340,6 +337,11 @@ static inline int ion_handle_get_flags(struct ion_client *client,
 	struct ion_handle *handle, unsigned long *flags)
 {
 	return -ENODEV;
+}
+
+bool ion_dma_buf_is_secure(struct dma_buf *dmabuf)
+{
+	return false;
 }
 
 #endif /* CONFIG_ION */

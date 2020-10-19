@@ -22,21 +22,9 @@ struct ion_device {
 struct ion_client {
 	struct ion_device *idev;
 	struct idr handle_idr;
-<<<<<<< HEAD
-<<<<<<< HEAD
 	struct latch_tree_root handle_root;
 	spinlock_t idr_lock;
 	spinlock_t rb_lock;
-=======
-	struct rb_root handle_root;
-	rwlock_t idr_lock;
-	rwlock_t rb_lock;
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
-=======
-	struct latch_tree_root handle_root;
-	spinlock_t idr_lock;
-	spinlock_t rb_lock;
->>>>>>> 215fb171b1c9... ion: Speed up handle idr and rbtree lookup with RCU
 };
 
 static void ion_buffer_free_work(struct work_struct *work)
@@ -79,21 +67,12 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap, size_t len,
 	if (heap->ops->allocate(heap, buffer, len, align, flags)) {
 		if (!(heap->flags & ION_HEAP_FLAG_DEFER_FREE))
 			goto free_buffer;
-<<<<<<< HEAD
 
 		drain_workqueue(heap->wq);
 		if (heap->ops->allocate(heap, buffer, len, align, flags))
 			goto free_buffer;
 	}
 
-=======
-
-		drain_workqueue(heap->wq);
-		if (heap->ops->allocate(heap, buffer, len, align, flags))
-			goto free_buffer;
-	}
-
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 	buffer->sg_table = heap->ops->map_dma(heap, buffer);
 	if (IS_ERR_OR_NULL(buffer->sg_table))
 		goto free_heap;
@@ -115,23 +94,6 @@ free_buffer:
 void ion_buffer_put(struct ion_buffer *buffer)
 {
 	struct ion_heap *heap = buffer->heap;
-<<<<<<< HEAD
-
-	struct ion_device *dev = buffer->dev;
-
-	msm_dma_buf_freed(&buffer->iommu_data);
-
-	mutex_lock(&dev->buffer_lock);
-	rb_erase(&buffer->node, &dev->buffers);
-	mutex_unlock(&dev->buffer_lock);
-
-	if (heap->flags & ION_HEAP_FLAG_DEFER_FREE)
-		ion_heap_freelist_add(heap, buffer);
-	else
-		ion_buffer_destroy(buffer);
-}
-=======
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	if (atomic_dec_and_test(&buffer->refcount)) {
 		if (heap->flags & ION_HEAP_FLAG_DEFER_FREE)
@@ -157,21 +119,9 @@ static struct ion_handle *ion_handle_create(struct ion_client *client,
 	};
 
 	idr_preload(GFP_KERNEL);
-<<<<<<< HEAD
-<<<<<<< HEAD
 	spin_lock(&client->idr_lock);
 	handle->id = idr_alloc(&client->handle_idr, handle, 1, 0, GFP_ATOMIC);
 	spin_unlock(&client->idr_lock);
-=======
-	write_lock(&client->idr_lock);
-	handle->id = idr_alloc(&client->handle_idr, handle, 1, 0, GFP_ATOMIC);
-	write_unlock(&client->idr_lock);
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
-=======
-	spin_lock(&client->idr_lock);
-	handle->id = idr_alloc(&client->handle_idr, handle, 1, 0, GFP_ATOMIC);
-	spin_unlock(&client->idr_lock);
->>>>>>> 215fb171b1c9... ion: Speed up handle idr and rbtree lookup with RCU
 	idr_preload_end();
 	if (handle->id < 0) {
 		kfree(handle);
@@ -185,8 +135,6 @@ void ion_handle_put(struct ion_handle *handle, int count)
 {
 	struct ion_buffer *buffer = handle->buffer;
 	struct ion_client *client = handle->client;
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 	if (!atomic_sub_return(count, &handle->refcount)) {
 		spin_lock(&client->idr_lock);
@@ -199,27 +147,6 @@ void ion_handle_put(struct ion_handle *handle, int count)
 
 		ion_buffer_put(buffer);
 		kfree_rcu(handle, rcu);
-=======
-	bool do_free;
-=======
->>>>>>> 215fb171b1c9... ion: Speed up handle idr and rbtree lookup with RCU
-
-	if (!atomic_sub_return(count, &handle->refcount)) {
-		spin_lock(&client->idr_lock);
-		idr_remove(&client->handle_idr, handle->id);
-		spin_unlock(&client->idr_lock);
-
-		spin_lock(&client->rb_lock);
-		latch_tree_erase(&handle->rnode, &client->handle_root, NULL);
-		spin_unlock(&client->rb_lock);
-
-		ion_buffer_put(buffer);
-<<<<<<< HEAD
-		kfree(handle);
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
-=======
-		kfree_rcu(handle, rcu);
->>>>>>> 215fb171b1c9... ion: Speed up handle idr and rbtree lookup with RCU
 	}
 }
 
@@ -247,7 +174,6 @@ void *__ion_map_kernel(struct ion_buffer *buffer)
 	mutex_unlock(&buffer->kmap_lock);
 
 	return vaddr;
-<<<<<<< HEAD
 }
 
 void __ion_unmap_kernel(struct ion_buffer *buffer)
@@ -260,20 +186,6 @@ void __ion_unmap_kernel(struct ion_buffer *buffer)
 	mutex_unlock(&buffer->kmap_lock);
 }
 
-=======
-}
-
-void __ion_unmap_kernel(struct ion_buffer *buffer)
-{
-	struct ion_heap *heap = buffer->heap;
-
-	mutex_lock(&buffer->kmap_lock);
-	if (!--buffer->kmap_refcount)
-		heap->ops->unmap_kernel(heap, buffer);
-	mutex_unlock(&buffer->kmap_lock);
-}
-
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 struct ion_buffer *__ion_alloc(struct ion_device *idev, size_t len,
 			       size_t align, unsigned int heap_id_mask,
 			       unsigned int flags)
@@ -363,13 +275,6 @@ static int ion_mmap(struct dma_buf *dmabuf, struct vm_area_struct *vma)
 
 	if (!heap->ops->map_user)
 		return -EINVAL;
-<<<<<<< HEAD
-	}
-
-	if (!heap->ops->map_user)
-		return -EINVAL;
-=======
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	if (!(buffer->flags & ION_FLAG_CACHED))
 		vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
@@ -396,13 +301,8 @@ static void *ion_dma_buf_kmap(struct dma_buf *dmabuf, unsigned long offset)
 static int ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf, size_t start,
 					size_t len, enum dma_data_direction dir)
 {
-<<<<<<< HEAD
-	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
-	void *vaddr;
-=======
 	struct ion_buffer *buffer = container_of(dmabuf->priv, typeof(*buffer),
 						 iommu_data);
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	return PTR_RET(__ion_map_kernel(buffer));
 }
@@ -436,30 +336,6 @@ struct dma_buf *__ion_share_dma_buf(struct ion_buffer *buffer)
 		.priv = &buffer->iommu_data
 	};
 	struct dma_buf *dmabuf;
-<<<<<<< HEAD
-
-	bool valid_handle;
-
-	if (lock_client)
-		mutex_lock(&client->lock);
-	valid_handle = ion_handle_validate(client, handle);
-	if (!valid_handle) {
-		WARN(1, "%s: invalid handle passed to share.\n", __func__);
-		if (lock_client)
-			mutex_unlock(&client->lock);
-		return ERR_PTR(-EINVAL);
-	}
-	buffer = handle->buffer;
-	ion_buffer_get(buffer);
-	if (lock_client)
-		mutex_unlock(&client->lock);
-
-	exp_info.ops = &dma_buf_ops;
-	exp_info.size = buffer->size;
-	exp_info.flags = O_RDWR;
-	exp_info.priv = &buffer->iommu_data;
-=======
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	dmabuf = dma_buf_export(&exp_info);
 	if (!IS_ERR(dmabuf))
@@ -494,102 +370,6 @@ struct ion_buffer *__ion_import_dma_buf(int fd)
 		return ERR_CAST(dmabuf);
 
 	buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
-<<<<<<< HEAD
-
-	if (lock_client)
-		mutex_lock(&client->lock);
-	/* if a handle exists for this buffer just take a reference to it */
-	handle = ion_handle_lookup(client, buffer);
-	if (!IS_ERR(handle)) {
-		handle = ion_handle_get_check_overflow(handle);
-		if (lock_client)
-			mutex_unlock(&client->lock);
-		goto end;
-	}
-
-struct ion_handle *ion_handle_get_by_id(struct ion_client *client, int id)
-{
-	struct ion_handle *handle, *ret = ERR_PTR(-EINVAL);
-
-	rcu_read_lock();
-	handle = idr_find(&client->handle_idr, id);
-	if (handle) {
-		if (atomic_inc_not_zero(&handle->refcount))
-			ret = handle;
-	}
-	rcu_read_unlock();
-
-	return ret;
-}
-
-static __always_inline bool
-ion_tree_less(struct latch_tree_node *a, struct latch_tree_node *b)
-{
-	struct ion_handle *a_handle = container_of(a, typeof(*a_handle), rnode);
-	struct ion_handle *b_handle = container_of(b, typeof(*b_handle), rnode);
-
-	return a_handle->buffer < b_handle->buffer;
-}
-
-static __always_inline int
-ion_tree_comp(void *key, struct latch_tree_node *n)
-{
-	struct ion_handle *handle = container_of(n, typeof(*handle), rnode);
-
-	if ((struct ion_buffer *)key < handle->buffer)
-		return -1;
-
-<<<<<<< HEAD
-	if ((struct ion_buffer *)key > handle->buffer)
-		return 1;
-=======
-	/* if this memory came from ion */
-	if (dmabuf->ops != &dma_buf_ops) {
-		pr_err("%s: can not sync dmabuf from another exporter\n",
-		       __func__);
-		dma_buf_put(dmabuf);
-		return -EINVAL;
-	}
-	buffer = container_of(dmabuf->priv, typeof(*buffer), iommu_data);
->>>>>>> 7601be493260... iommu: msm: Rewrite to improve clarity and performance
-
-	return 0;
-}
-
-static const struct latch_tree_ops ion_tree_ops = {
-	.less = ion_tree_less,
-	.comp = ion_tree_comp
-};
-
-static void ion_handle_rb_add(struct ion_client *client,
-			      struct ion_handle *handle)
-{
-	spin_lock(&client->rb_lock);
-	latch_tree_insert(&handle->rnode, &client->handle_root, &ion_tree_ops);
-	spin_unlock(&client->rb_lock);
-}
-
-static struct ion_handle *ion_handle_get_by_buffer(struct ion_client *client,
-						   struct ion_buffer *buffer)
-{
-	struct ion_handle *handle, *ret = ERR_PTR(-EINVAL);
-	struct latch_tree_node *entry;
-
-	rcu_read_lock();
-	entry = latch_tree_find(buffer, &client->handle_root, &ion_tree_ops);
-	if (entry) {
-		handle = container_of(entry, typeof(*handle), rnode);
-		if (atomic_inc_not_zero(&handle->refcount))
-			ret = handle;
-	}
-	rcu_read_unlock();
-
-	return ret;
-}
-
-static long ion_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-=======
 	atomic_inc(&buffer->refcount);
 	dma_buf_put(dmabuf);
 	return buffer;
@@ -666,7 +446,6 @@ static struct ion_handle *ion_handle_get_by_buffer(struct ion_client *client,
 
 static long ion_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 	union {
 		struct ion_fd_data fd;
 		struct ion_allocation_data allocation;
@@ -796,18 +575,8 @@ static int ion_open(struct inode *inode, struct file *file)
 	*client = (typeof(*client)){
 		.idev = idev,
 		.handle_idr = IDR_INIT(client->handle_idr),
-<<<<<<< HEAD
-<<<<<<< HEAD
 		.idr_lock = __SPIN_LOCK_UNLOCKED(client->idr_lock),
 		.rb_lock = __SPIN_LOCK_UNLOCKED(client->rb_lock)
-=======
-		.idr_lock = __RW_LOCK_UNLOCKED(client->idr_lock),
-		.rb_lock = __RW_LOCK_UNLOCKED(client->rb_lock)
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
-=======
-		.idr_lock = __SPIN_LOCK_UNLOCKED(client->idr_lock),
-		.rb_lock = __SPIN_LOCK_UNLOCKED(client->rb_lock)
->>>>>>> 215fb171b1c9... ion: Speed up handle idr and rbtree lookup with RCU
 	};
 
 	file->private_data = client;
@@ -861,29 +630,6 @@ int ion_walk_heaps(struct ion_client *client, int heap_id,
 	struct ion_device *idev = client->idev;
 	struct ion_heap *heap;
 	int ret = 0;
-<<<<<<< HEAD
-=======
-
-	down_write(&idev->heap_rwsem);
-	plist_for_each_entry(heap, &idev->heaps, node) {
-		if (heap->type == type && ION_HEAP(heap->id) == heap_id) {
-			ret = f(heap, data);
-			break;
-		}
-	}
-	up_write(&idev->heap_rwsem);
-
-	return ret;
-}
-
-static int ion_debug_allbufs_show(struct seq_file *s, void *unused)
-{
-	struct ion_device *dev = s->private;
-	struct rb_node *n;
-
-	seq_printf(s, "%16.s %16.s %12.s %12.s %20.s    %s\n", "heap",
-		"buffer", "size", "ref cnt", "allocator", "references");
->>>>>>> 4b823135907e... ion: Rewrite to improve clarity and performance
 
 	down_write(&idev->heap_rwsem);
 	plist_for_each_entry(heap, &idev->heaps, node) {
