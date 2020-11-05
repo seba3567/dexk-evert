@@ -2700,7 +2700,6 @@ static u64 decay_load(u64 val, u64 n)
 	return val;
 }
 
-<<<<<<< HEAD
 static u32 __accumulate_pelt_segments(u64 periods, u32 d1, u32 d3)
 {
 	u32 c1, c2, c3 = d3; /* y^0 == 1 */
@@ -2721,43 +2720,6 @@ static u32 __accumulate_pelt_segments(u64 periods, u32 d1, u32 d3)
 	 */
 	c2 = LOAD_AVG_MAX - decay_load(LOAD_AVG_MAX, periods) - 1024;
 
-=======
-static u32 __accumulate_sum(u64 periods, u32 period_contrib, u32 remainder)
-{
-	u32 c1, c2, c3 = remainder; /* y^0 == 1 */
-
-	if (!periods)
-		return remainder - period_contrib;
-
-	if (unlikely(periods >= LOAD_AVG_MAX_N))
-		return LOAD_AVG_MAX;
-
-	/*
-	 * c1 = d1 y^(p+1)
-	 */
-	c1 = decay_load((u64)(1024 - period_contrib), periods);
-
-	periods -= 1;
-	/*
-	 * For updates fully spanning n periods, the contribution to runnable
-	 * average will be:
-	 *
-	 *   c2 = 1024 \Sum y^n
-	 *
-	 * We can compute this reasonably efficiently by combining:
-	 *
-	 *   y^PERIOD = 1/2 with precomputed 1024 \Sum y^n {for: n < PERIOD}
-	 */
-	if (likely(periods <= LOAD_AVG_PERIOD)) {
-		c2 = runnable_avg_yN_sum[periods];
-	} else {
-		c2 = __accumulated_sum_N32[periods/LOAD_AVG_PERIOD];
-		periods %= LOAD_AVG_PERIOD;
-		c2 = decay_load(c2, periods);
-		c2 += runnable_avg_yN_sum[periods];
-	}
-
->>>>>>> 408a5e931a4c (sched/fair: Optimize ___update_sched_avg())
 	return c1 + c2 + c3;
 }
 
@@ -2778,7 +2740,6 @@ static u32 __accumulate_sum(u64 periods, u32 period_contrib, u32 remainder)
  *         |<->|<----------------->|<--->|
  * ... |---x---|------| ... |------|-----x (now)
  *
-<<<<<<< HEAD
  *                           p-1
  * u' = (u + d1) y^p + 1024 \Sum y^n + d3 y^0
  *                           n=1
@@ -2788,30 +2749,14 @@ static u32 __accumulate_sum(u64 periods, u32 period_contrib, u32 remainder)
  *                     p-1
  *      d1 y^p + 1024 \Sum y^n + d3 y^0		(Step 2)
  *                     n=1
-=======
- *                                p
- * u' = (u + d1) y^(p+1) + 1024 \Sum y^n + d3 y^0
- *                               n=1
- *
- *    = u y^(p+1) +				(Step 1)
- *
- *                          p
- *      d1 y^(p+1) + 1024 \Sum y^n + d3 y^0	(Step 2)
- *                         n=1
->>>>>>> 408a5e931a4c (sched/fair: Optimize ___update_sched_avg())
  */
 static __always_inline u32
 accumulate_sum(u64 delta, int cpu, struct sched_avg *sa,
 	       unsigned long weight, int running, struct cfs_rq *cfs_rq)
 {
 	unsigned long scale_freq, scale_cpu;
-<<<<<<< HEAD
 	u32 contrib = (u32)delta; /* p == 0 -> delta < 1024 */
 	u64 periods;
-=======
-	u64 periods;
-	u32 contrib;
->>>>>>> 408a5e931a4c (sched/fair: Optimize ___update_sched_avg())
 
 	scale_freq = arch_scale_freq_capacity(NULL, cpu);
 	scale_cpu = arch_scale_cpu_capacity(NULL, cpu);
@@ -2829,7 +2774,6 @@ accumulate_sum(u64 delta, int cpu, struct sched_avg *sa,
 				decay_load(cfs_rq->runnable_load_sum, periods);
 		}
 		sa->util_sum = decay_load((u64)(sa->util_sum), periods);
-<<<<<<< HEAD
 
 		/*
 		 * Step 2
@@ -2838,15 +2782,6 @@ accumulate_sum(u64 delta, int cpu, struct sched_avg *sa,
 		contrib = __accumulate_pelt_segments(periods,
 				1024 - sa->period_contrib, delta);
 	}
-=======
-	}
-
-	/*
-	 * Step 2
-	 */
-	delta %= 1024;
-	contrib = __accumulate_sum(periods, sa->period_contrib, delta);
->>>>>>> 408a5e931a4c (sched/fair: Optimize ___update_sched_avg())
 	sa->period_contrib = delta;
 
 	contrib = cap_scale(contrib, scale_freq);
@@ -2912,12 +2847,8 @@ ___update_load_avg(u64 now, int cpu, struct sched_avg *sa,
 	delta >>= 10;
 	if (!delta)
 		return 0;
-<<<<<<< HEAD
 
 	sa->last_update_time += delta << 10;
-=======
-	sa->last_update_time = now;
->>>>>>> 408a5e931a4c (sched/fair: Optimize ___update_sched_avg())
 
 	/*
 	 * Now we know we crossed measurement unit boundaries. The *_avg
