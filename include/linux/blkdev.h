@@ -95,10 +95,11 @@ struct request {
 	struct request_queue *q;
 	struct blk_mq_ctx *mq_ctx;
 
-	int cpu;
-	unsigned cmd_type;
 	u64 cmd_flags;
+	unsigned cmd_type;
 	unsigned long atomic_flags;
+
+	int cpu;
 
 	/* the following two fields are internal, NEVER access directly */
 	unsigned int __data_len;	/* total data len */
