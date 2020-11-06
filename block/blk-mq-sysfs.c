@@ -396,12 +396,14 @@ static int blk_mq_register_hctx(struct blk_mq_hw_ctx *hctx)
 	return ret;
 }
 
-static void __blk_mq_unregister_disk(struct gendisk *disk)
+void blk_mq_unregister_disk(struct gendisk *disk)
 {
 	struct request_queue *q = disk->queue;
 	struct blk_mq_hw_ctx *hctx;
 	struct blk_mq_ctx *ctx;
 	int i, j;
+
+	blk_mq_disable_hotplug();
 
 	queue_for_each_hw_ctx(q, hctx, i) {
 		blk_mq_unregister_hctx(hctx);
@@ -419,12 +421,6 @@ static void __blk_mq_unregister_disk(struct gendisk *disk)
 	kobject_put(&disk_to_dev(disk)->kobj);
 
 	q->mq_sysfs_init_done = false;
-}
-
-void blk_mq_unregister_disk(struct gendisk *disk)
-{
-	blk_mq_disable_hotplug();
-	__blk_mq_unregister_disk(disk);
 	blk_mq_enable_hotplug();
 }
 
@@ -467,7 +463,7 @@ int blk_mq_register_disk(struct gendisk *disk)
 	}
 
 	if (ret)
-		__blk_mq_unregister_disk(disk);
+		blk_mq_unregister_disk(disk);
 	else
 		q->mq_sysfs_init_done = true;
 out:
