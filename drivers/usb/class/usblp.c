@@ -481,12 +481,8 @@ static int usblp_release(struct inode *inode, struct file *file)
 	usb_autopm_put_interface(usblp->intf);
 
 	if (!usblp->present)		/* finish cleanup from disconnect */
-<<<<<<< HEAD
 		usblp_cleanup(usblp);	/* any URBs must be dead */
 
-=======
-		usblp_cleanup(usblp);
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	mutex_unlock(&usblp_mutex);
 	return 0;
 }

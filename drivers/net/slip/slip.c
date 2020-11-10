@@ -867,14 +867,10 @@ err_free_chan:
 	sl->tty = NULL;
 	tty->disc_data = NULL;
 	clear_bit(SLF_INUSE, &sl->flags);
-<<<<<<< HEAD
 	/* do not call free_netdev before rtnl_unlock */
 	rtnl_unlock();
 	sl_free_netdev(sl->dev);
 	return err;
-=======
-	free_netdev(sl->dev);
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 
 err_exit:
 	rtnl_unlock();

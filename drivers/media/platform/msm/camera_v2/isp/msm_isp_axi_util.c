@@ -2267,12 +2267,8 @@ static int msm_isp_process_done_buf(struct vfe_device *vfe_dev,
 		buf->buf_debug.put_state_last ^= 1;
 		rc = vfe_dev->buf_mgr->ops->buf_done(vfe_dev->buf_mgr,
 		 buf->bufq_handle, buf->buf_idx, time_stamp,
-<<<<<<< HEAD
 		 frame_id, stream_info->runtime_output_format,
                  VB2_BUF_STATE_DONE);
-=======
-		 frame_id, stream_info->runtime_output_format);
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 		if (rc == -EFAULT) {
 			msm_isp_halt_send_error(vfe_dev,
 					ISP_EVENT_BUF_FATAL_ERROR);

@@ -4532,11 +4532,7 @@ static void ixgbe_fdir_filter_restore(struct ixgbe_adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct hlist_node *node2;
 	struct ixgbe_fdir_filter *filter;
-<<<<<<< HEAD
 	u8 queue;
-=======
-	u64 action;
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 
 	spin_lock(&adapter->fdir_perfect_lock);
 
@@ -4545,7 +4541,6 @@ static void ixgbe_fdir_filter_restore(struct ixgbe_adapter *adapter)
 
 	hlist_for_each_entry_safe(filter, node2,
 				  &adapter->fdir_filter_list, fdir_node) {
-<<<<<<< HEAD
 		if (filter->action == IXGBE_FDIR_DROP_QUEUE) {
 			queue = IXGBE_FDIR_DROP_QUEUE;
 		} else {
@@ -4574,19 +4569,6 @@ static void ixgbe_fdir_filter_restore(struct ixgbe_adapter *adapter)
 
 		ixgbe_fdir_write_perfect_filter_82599(hw,
 				&filter->filter, filter->sw_idx, queue);
-=======
-		action = filter->action;
-		if (action != IXGBE_FDIR_DROP_QUEUE && action != 0)
-			action =
-			(action >> ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF) - 1;
-
-		ixgbe_fdir_write_perfect_filter_82599(hw,
-				&filter->filter,
-				filter->sw_idx,
-				(action == IXGBE_FDIR_DROP_QUEUE) ?
-				IXGBE_FDIR_DROP_QUEUE :
-				adapter->rx_ring[action]->reg_idx);
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	}
 
 	spin_unlock(&adapter->fdir_perfect_lock);

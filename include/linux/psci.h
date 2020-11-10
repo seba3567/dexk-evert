@@ -27,13 +27,10 @@ bool psci_power_state_is_valid(u32 state);
 int psci_cpu_init_idle(unsigned int cpu);
 int psci_cpu_suspend_enter(unsigned long index);
 
-<<<<<<< HEAD
 unsigned long __invoke_psci_fn_smc(unsigned long function_id,
 			unsigned long arg0, unsigned long arg1,
 			unsigned long arg2);
 
-=======
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 enum psci_conduit {
 	PSCI_CONDUIT_NONE,
 	PSCI_CONDUIT_SMC,

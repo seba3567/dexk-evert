@@ -586,15 +586,12 @@ ssize_t __weak cpu_show_itlb_multihit(struct device *dev,
 	return sprintf(buf, "Not affected\n");
 }
 
-<<<<<<< HEAD
 ssize_t __weak cpu_show_srbds(struct device *dev,
 			      struct device_attribute *attr, char *buf)
 {
 	return sprintf(buf, "Not affected\n");
 }
 
-=======
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 static DEVICE_ATTR(meltdown, 0444, cpu_show_meltdown, NULL);
 static DEVICE_ATTR(spectre_v1, 0444, cpu_show_spectre_v1, NULL);
 static DEVICE_ATTR(spectre_v2, 0444, cpu_show_spectre_v2, NULL);
@@ -603,10 +600,7 @@ static DEVICE_ATTR(l1tf, 0444, cpu_show_l1tf, NULL);
 static DEVICE_ATTR(mds, 0444, cpu_show_mds, NULL);
 static DEVICE_ATTR(tsx_async_abort, 0444, cpu_show_tsx_async_abort, NULL);
 static DEVICE_ATTR(itlb_multihit, 0444, cpu_show_itlb_multihit, NULL);
-<<<<<<< HEAD
 static DEVICE_ATTR(srbds, 0444, cpu_show_srbds, NULL);
-=======
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 
 static struct attribute *cpu_root_vulnerabilities_attrs[] = {
 	&dev_attr_meltdown.attr,
@@ -617,10 +611,7 @@ static struct attribute *cpu_root_vulnerabilities_attrs[] = {
 	&dev_attr_mds.attr,
 	&dev_attr_tsx_async_abort.attr,
 	&dev_attr_itlb_multihit.attr,
-<<<<<<< HEAD
 	&dev_attr_srbds.attr,
-=======
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	NULL
 };
 

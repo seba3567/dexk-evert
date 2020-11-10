@@ -1029,7 +1029,6 @@ u64 kvm_get_arch_capabilities(void)
 	 * If TSX is disabled on the system, guests are also mitigated against
 	 * TAA and clear CPU buffer mitigation is not required for guests.
 	 */
-<<<<<<< HEAD
 	if (!boot_cpu_has(X86_FEATURE_RTM))
 		data &= ~ARCH_CAP_TAA_NO;
 	else if (!boot_cpu_has_bug(X86_BUG_TAA))
@@ -1039,12 +1038,6 @@ u64 kvm_get_arch_capabilities(void)
 
 	/* KVM does not emulate MSR_IA32_TSX_CTRL.  */
 	data &= ~ARCH_CAP_TSX_CTRL_MSR;
-=======
-	if (boot_cpu_has_bug(X86_BUG_TAA) && boot_cpu_has(X86_FEATURE_RTM) &&
-	    (data & ARCH_CAP_TSX_CTRL_MSR))
-		data &= ~ARCH_CAP_MDS_NO;
-
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	return data;
 }
 

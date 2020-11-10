@@ -334,21 +334,14 @@ void f2fs_drop_inmem_pages(struct inode *inode)
 	}
 
 	fi->i_gc_failures[GC_FAILURE_ATOMIC] = 0;
-<<<<<<< HEAD
-=======
-	stat_dec_atomic_write(inode);
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 
 	spin_lock(&sbi->inode_lock[ATOMIC_FILE]);
 	if (!list_empty(&fi->inmem_ilist))
 		list_del_init(&fi->inmem_ilist);
-<<<<<<< HEAD
 	if (f2fs_is_atomic_file(inode)) {
 		clear_inode_flag(inode, FI_ATOMIC_FILE);
 		sbi->atomic_files--;
 	}
-=======
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	spin_unlock(&sbi->inode_lock[ATOMIC_FILE]);
 }
 

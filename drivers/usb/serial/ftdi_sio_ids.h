@@ -38,7 +38,6 @@
 
 #define FTDI_LUMEL_PD12_PID	0x6002
 
-<<<<<<< HEAD
 /*
  * Custom USB adapters made by Falconia Partners LLC
  * for FreeCalypso project, ID codes allocated to Falconia by FTDI.
@@ -46,8 +45,6 @@
 #define FTDI_FALCONIA_JTAG_BUF_PID	0x7150
 #define FTDI_FALCONIA_JTAG_UNBUF_PID	0x7151
 
-=======
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 /* Sienna Serial Interface by Secyourit GmbH */
 #define FTDI_SIENNA_PID		0x8348
 

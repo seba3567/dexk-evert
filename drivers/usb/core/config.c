@@ -365,16 +365,9 @@ static int usb_parse_endpoint(struct device *ddev, int cfgno,
 	 * (see the end of section 5.6.3), so don't warn about them.
 	 */
 	maxp = usb_endpoint_maxp(&endpoint->desc);
-<<<<<<< HEAD
 	if (maxp == 0 && !(usb_endpoint_xfer_isoc(d) && asnum == 0)) {
 		dev_warn(ddev, "config %d interface %d altsetting %d endpoint 0x%X has invalid wMaxPacketSize 0\n",
 		    cfgno, inum, asnum, d->bEndpointAddress);
-=======
-	if (maxp == 0) {
-		dev_warn(ddev, "config %d interface %d altsetting %d endpoint 0x%X has wMaxPacketSize 0, skipping\n",
-		    cfgno, inum, asnum, d->bEndpointAddress);
-		goto skip_to_next_endpoint_or_interface_descriptor;
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	}
 
 	/* Find the highest legal maxpacket size for this endpoint */

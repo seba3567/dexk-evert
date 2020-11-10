@@ -3596,10 +3596,6 @@ static void hdmi_tx_hpd_off(struct hdmi_tx_ctrl *hdmi_ctrl)
 	hdmi_ctrl->hpd_initialized = false;
 	hdmi_ctrl->hpd_off_pending = false;
 	hdmi_ctrl->dc_support = false;
-<<<<<<< HEAD
-=======
-
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	hdmi_edid_reset_parser(hdmi_tx_get_fd(HDMI_TX_FEAT_EDID));
 
 	DEV_DBG("%s: HPD is now OFF\n", __func__);
@@ -4297,15 +4293,12 @@ static int hdmi_tx_evt_handle_resume(struct hdmi_tx_ctrl *hdmi_ctrl)
 	if (hdmi_tx_is_cec_wakeup_en(hdmi_ctrl))
 		hdmi_ctrl->mdss_util->disable_wake_irq(&hdmi_tx_hw);
 
-<<<<<<< HEAD
 	if (hdmi_tx_is_cec_wakeup_en(hdmi_ctrl))
 		hdmi_ctrl->mdss_util->disable_wake_irq(&hdmi_tx_hw);
 
 	if (hdmi_tx_is_cec_wakeup_en(hdmi_ctrl))
 		hdmi_ctrl->mdss_util->disable_wake_irq(&hdmi_tx_hw);
 
-=======
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 end:
 	return rc;
 }

@@ -457,12 +457,8 @@ static inline int __do_cpuid_ent(struct kvm_cpuid_entry2 *entry, u32 function,
 				entry->edx |= F(SPEC_CTRL);
 			if (boot_cpu_has(X86_FEATURE_STIBP))
 				entry->edx |= F(INTEL_STIBP);
-<<<<<<< HEAD
 			if (boot_cpu_has(X86_FEATURE_SPEC_CTRL_SSBD) ||
 			    boot_cpu_has(X86_FEATURE_AMD_SSBD))
-=======
-			if (boot_cpu_has(X86_FEATURE_SSBD))
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 				entry->edx |= F(SPEC_CTRL_SSBD);
 			/*
 			 * We emulate ARCH_CAPABILITIES in software even

@@ -2182,16 +2182,6 @@ static int lan78xx_bind(struct lan78xx_net *dev, struct usb_interface *intf)
 	int ret;
 	int i;
 
-<<<<<<< HEAD
-=======
-	ret = lan78xx_get_endpoints(dev, intf);
-	if (ret) {
-		netdev_warn(dev->net, "lan78xx_get_endpoints failed: %d\n",
-			    ret);
-		return ret;
-	}
-
->>>>>>> 93ffd041d764 (Merge tag 'LA.UM.8.2.r1-06700-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into q-merge)
 	dev->data[0] = (unsigned long)kzalloc(sizeof(*pdata), GFP_KERNEL);
 
 	pdata = (struct lan78xx_priv *)(dev->data[0]);
