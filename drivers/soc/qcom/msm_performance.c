@@ -194,7 +194,6 @@ static struct kobject *events_kobj;
 
 static ssize_t show_cpu_hotplug(struct kobject *kobj,
 					struct kobj_attribute *attr, char *buf)
-<<<<<<< HEAD
 {
 	return snprintf(buf, PAGE_SIZE, "\n");
 }
@@ -296,164 +295,6 @@ static int events_notify_userspace(void *data)
 		if (notify_change)
 			sysfs_notify(events_kobj, NULL, "cpu_hotplug");
 	}
-=======
-{
-	return snprintf(buf, PAGE_SIZE, "\n");
-}
-static struct kobj_attribute cpu_hotplug_attr =
-__ATTR(cpu_hotplug, 0444, show_cpu_hotplug, NULL);
-
-static struct attribute *events_attrs[] = {
-	&cpu_hotplug_attr.attr,
-	NULL,
-};
-
-static struct attribute_group events_attr_group = {
-	.attrs = events_attrs,
-};
-
-/*******************************sysfs ends************************************/
-static int perf_adjust_notify(struct notifier_block *nb, unsigned long val,
-							void *data)
-{
-	struct cpufreq_policy *policy = data;
-	unsigned int cpu = policy->cpu;
-	struct cpu_status *cpu_st = &per_cpu(cpu_stats, cpu);
-	unsigned int min = cpu_st->min, max = cpu_st->max;
-
-
-	if (val != CPUFREQ_ADJUST)
-		return NOTIFY_OK;
->>>>>>> 6e32be0e3db4 (msm_performance: checkout to msm-4.14)
-
-	pr_debug("msm_perf: CPU%u policy before: %u:%u kHz\n", cpu,
-						policy->min, policy->max);
-	pr_debug("msm_perf: CPU%u seting min:max %u:%u kHz\n", cpu, min, max);
-
-<<<<<<< HEAD
-static int init_events_group(void)
-{
-	int ret;
-	struct kobject *module_kobj;
-
-	module_kobj = kset_find_obj(module_kset, KBUILD_MODNAME);
-	if (!module_kobj) {
-		pr_err("msm_perf: Couldn't find module kobject\n");
-		return -ENOENT;
-	}
-
-	events_kobj = kobject_create_and_add("events", module_kobj);
-	if (!events_kobj) {
-		pr_err("msm_perf: Failed to add events_kobj\n");
-		return -ENOMEM;
-	}
-
-	ret = sysfs_create_group(events_kobj, &events_attr_group);
-	if (ret) {
-		pr_err("msm_perf: Failed to create sysfs\n");
-		return ret;
-	}
-
-	spin_lock_init(&(events_group.cpu_hotplug_lock));
-	events_notify_thread = kthread_run(events_notify_userspace,
-					NULL, "msm_perf:events_notify");
-	if (IS_ERR(events_notify_thread))
-		return PTR_ERR(events_notify_thread);
-
-	events_group.init_success = true;
-
-	return 0;
-}
-
-static int __init msm_performance_init(void)
-{
-	unsigned int cpu;
-
-	cpufreq_register_notifier(&perf_cpufreq_nb, CPUFREQ_POLICY_NOTIFIER);
-
-	for_each_present_cpu(cpu)
-		per_cpu(cpu_stats, cpu).max = UINT_MAX;
-
-	register_cpu_notifier(&msm_performance_cpu_notifier);
-
-	init_events_group();
-
-	return 0;
-=======
-	cpufreq_verify_within_limits(policy, min, max);
-
-	pr_debug("msm_perf: CPU%u policy after: %u:%u kHz\n", cpu,
-						policy->min, policy->max);
-
-	return NOTIFY_OK;
-}
-
-static struct notifier_block perf_cpufreq_nb = {
-	.notifier_call = perf_adjust_notify,
-};
-
-static inline void hotplug_notify(int action)
-{
-	unsigned long flags;
-
-	if (!events_group.init_success)
-		return;
-
-	if ((action == CPU_ONLINE) || (action == CPU_DEAD)) {
-		spin_lock_irqsave(&(events_group.cpu_hotplug_lock), flags);
-		events_group.cpu_hotplug = true;
-		spin_unlock_irqrestore(&(events_group.cpu_hotplug_lock), flags);
-		wake_up_process(events_notify_thread);
-	}
->>>>>>> 6e32be0e3db4 (msm_performance: checkout to msm-4.14)
-}
-late_initcall(msm_performance_init);
-
-<<<<<<< HEAD
-
-=======
-static int __ref msm_performance_cpu_callback(struct notifier_block *nfb,
-		unsigned long action, void *hcpu)
-{
-
-	hotplug_notify(action);
-
-	return NOTIFY_OK;
-}
-
-static struct notifier_block __refdata msm_performance_cpu_notifier = {
-	.notifier_call = msm_performance_cpu_callback,
-};
-
-static int events_notify_userspace(void *data)
-{
-	unsigned long flags;
-	bool notify_change;
-
-	while (1) {
-
-		set_current_state(TASK_INTERRUPTIBLE);
-		spin_lock_irqsave(&(events_group.cpu_hotplug_lock), flags);
-
-		if (!events_group.cpu_hotplug) {
-			spin_unlock_irqrestore(&(events_group.cpu_hotplug_lock),
-									flags);
-
-			schedule();
-			if (kthread_should_stop())
-				break;
-			spin_lock_irqsave(&(events_group.cpu_hotplug_lock),
-									flags);
-		}
-
-		set_current_state(TASK_RUNNING);
-		notify_change = events_group.cpu_hotplug;
-		events_group.cpu_hotplug = false;
-		spin_unlock_irqrestore(&(events_group.cpu_hotplug_lock), flags);
-
-		if (notify_change)
-			sysfs_notify(events_kobj, NULL, "cpu_hotplug");
-	}
 
 	return 0;
 }
@@ -508,4 +349,5 @@ static int __init msm_performance_init(void)
 	return 0;
 }
 late_initcall(msm_performance_init);
->>>>>>> 6e32be0e3db4 (msm_performance: checkout to msm-4.14)
+
+
