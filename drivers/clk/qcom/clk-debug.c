@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2017, 2020,
+ * Copyright (c) 2013-2014, 2016-2017,
  *
  * The Linux Foundation. All rights reserved.
  *
@@ -177,19 +177,10 @@ static int clk_debug_mux_set_parent(struct clk_hw *hw, u8 index)
 
 		regval |= (meas->parent[index].next_sel & meas->mask);
 
-<<<<<<< HEAD
 		if (!meas->parent[index].en_mask)
 			regval |= meas->en_mask;
 		else if (meas->parent[index].en_mask != 0xFF)
 			regval |= meas->parent[index].en_mask;
-=======
-		if (meas->parent[index].en_mask != 0xFF) {
-			if (meas->parent[index].en_mask)
-				regval |= meas->parent[index].en_mask;
-			else
-				regval |= meas->en_mask;
-		}
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 
 		regmap_write(meas->regmap[dbg_cc], 0x0, regval);
 	}

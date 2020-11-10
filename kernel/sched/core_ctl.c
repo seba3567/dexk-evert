@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 /* Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
-=======
-/* Copyright (c) 2014-2017, 2020 The Linux Foundation. All rights reserved.
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -26,10 +22,7 @@
 #include <linux/sched/rt.h>
 
 #include <trace/events/sched.h>
-<<<<<<< HEAD
 #include "sched.h"
-=======
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 
 #define MAX_CPUS_PER_CLUSTER 4
 #define MAX_CLUSTERS 2
@@ -78,13 +71,8 @@ static struct cluster_data cluster_state[MAX_CLUSTERS];
 static unsigned int num_clusters;
 
 #define for_each_cluster(cluster, idx) \
-<<<<<<< HEAD
 	for ((cluster) = &cluster_state[idx]; (idx) < num_clusters;\
 		(idx)++, (cluster) = &cluster_state[idx])
-=======
-	for (; (idx) < num_clusters && ((cluster) = &cluster_state[idx]);\
-		(idx)++)
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 
 static DEFINE_SPINLOCK(state_lock);
 static void apply_need(struct cluster_data *state);
@@ -588,12 +576,8 @@ static bool eval_need(struct cluster_data *cluster)
 		cluster->active_cpus = get_active_cpu_count(cluster);
 		thres_idx = cluster->active_cpus ? cluster->active_cpus - 1 : 0;
 		list_for_each_entry(c, &cluster->lru, sib) {
-<<<<<<< HEAD
 			if (c->busy >= cluster->busy_up_thres[thres_idx] ||
 					sched_cpu_high_irqload(c->cpu))
-=======
-			if (c->busy >= cluster->busy_up_thres[thres_idx])
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 				c->is_busy = true;
 			else if (c->busy < cluster->busy_down_thres[thres_idx])
 				c->is_busy = false;

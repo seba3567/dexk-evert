@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2016, 2018, 2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2016, 2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -663,11 +663,7 @@ static void cpe_notify_cmi_client(struct cpe_info *t_info, u8 *payload,
 	hdr = CMI_GET_HEADER(payload);
 	service = CMI_HDR_GET_SERVICE(hdr);
 
-<<<<<<< HEAD
 	notif.event = CMI_API_MSG;
-=======
-	notif.event = (enum cmi_api_event)CPE_SVC_CMI_MSG;
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 	notif.result = result;
 	notif.message = payload;
 

@@ -3416,12 +3416,7 @@ static int pp_ad_calc_bl(struct msm_fb_data_type *mfd, int bl_in, int *bl_out,
 		return -EPERM;
 	}
 
-<<<<<<< HEAD
 	if (!ad->bl_mfd || !ad->bl_mfd->panel_info) {
-=======
-	if (!ad->bl_mfd || !ad->bl_mfd->panel_info ||
-		ad->bl_att_lut == NULL) {
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 		pr_err("Invalid ad info: bl_mfd = 0x%pK, ad->bl_mfd->panel_info = 0x%pK, bl_att_lut = 0x%pK\n",
 			ad->bl_mfd,
 			(!ad->bl_mfd) ? NULL : ad->bl_mfd->panel_info,

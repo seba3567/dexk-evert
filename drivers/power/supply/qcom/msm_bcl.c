@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, 2017, 2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014, 2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -227,12 +227,7 @@ int msm_bcl_enable(void)
 	int ret = 0, i = 0;
 	struct bcl_param_data *param_data = NULL;
 
-<<<<<<< HEAD
 	if (!bcl[i]) {
-=======
-	if (!bcl[i] || (bcl[BCL_PARAM_VOLTAGE]->thresh == NULL)
-		|| (bcl[BCL_PARAM_CURRENT]->thresh == NULL)) {
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 		pr_err("BCL not initialized\n");
 		return -EINVAL;
 	}

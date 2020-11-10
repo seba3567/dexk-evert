@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -544,15 +544,12 @@ static int qpnp_tm_probe(struct platform_device *pdev)
 	int rc = 0;
 	u8 raw_type[2], type, subtype;
 
-<<<<<<< HEAD
 	if (!pdev || !pdev->dev.of_node) {
 		dev_err(&pdev->dev, "%s: device tree node not found\n",
 			__func__);
 		return -EINVAL;
 	}
 
-=======
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 	node = pdev->dev.of_node;
 
 	chip = kzalloc(sizeof(struct qpnp_tm_chip), GFP_KERNEL);

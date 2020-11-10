@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -6344,7 +6344,7 @@ static int fetch_cpu_mitigaiton_info(struct msm_thermal_data *data,
 		struct platform_device *pdev)
 {
 
-	int _cpu = 0, err = 0, sensor_name_len = 0;
+	int _cpu = 0, err = 0;
 	struct device_node *cpu_node = NULL, *limits = NULL, *tsens = NULL;
 	char *key = NULL;
 	struct device_node *node = pdev->dev.of_node;
@@ -6402,14 +6402,8 @@ static int fetch_cpu_mitigaiton_info(struct msm_thermal_data *data,
 			err = -ENOMEM;
 			goto fetch_mitig_exit;
 		}
-<<<<<<< HEAD
 		strscpy((char *)cpus[_cpu].sensor_type, sensor_name,
 			sizeof(cpus[_cpu].sensor_type));
-=======
-		sensor_name_len = strlen(sensor_name);
-		strlcpy((char *) cpus[_cpu].sensor_type, sensor_name,
-			sensor_name_len + 1);
->>>>>>> 318a44f767c7 (Merge tag 'LA.UM.8.2.r1-07300-sdm660.0' of https://source.codeaurora.org/quic/la/kernel/msm-4.4 into eas-old-cam)
 		create_alias_name(_cpu, limits, pdev);
 	}
 
