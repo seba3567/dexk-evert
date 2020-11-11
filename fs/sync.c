@@ -17,6 +17,12 @@
 #include <linux/backing-dev.h>
 #include "internal.h"
 
+<<<<<<< HEAD
+=======
+bool fsync_enabled = false;
+module_param(fsync_enabled, bool, 0644);
+
+>>>>>>> b6d59e950706 (fs: sync: Disable fsync by default)
 #define VALID_FLAGS (SYNC_FILE_RANGE_WAIT_BEFORE|SYNC_FILE_RANGE_WRITE| \
 			SYNC_FILE_RANGE_WAIT_AFTER)
 
