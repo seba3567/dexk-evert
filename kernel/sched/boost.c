@@ -11,13 +11,10 @@
  */
 
 #include "sched.h"
-<<<<<<< HEAD
 #include <linux/of.h>
 #include <linux/sched/core_ctl.h>
 #include <trace/events/sched.h>
-=======
 #include <linux/binfmts.h>
->>>>>>> c8c6e81d8c83 (sched: boost: Don't allow powerhal write sched_boost)
 
 /*
  * Scheduler boost is a mechanism to temporarily place tasks on CPUs
