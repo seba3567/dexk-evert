@@ -43,21 +43,13 @@ static s32
 krb5_make_rc4_seq_num(struct krb5_ctx *kctx, int direction, s32 seqnum,
 		      unsigned char *cksum, unsigned char *buf)
 {
-<<<<<<< HEAD
 	struct crypto_blkcipher *cipher;
-=======
-	struct crypto_sync_skcipher *cipher;
->>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	unsigned char plain[8];
 	s32 code;
 
 	dprintk("RPC:       %s:\n", __func__);
-<<<<<<< HEAD
 	cipher = crypto_alloc_blkcipher(kctx->gk5e->encrypt_name, 0,
 					CRYPTO_ALG_ASYNC);
-=======
-	cipher = crypto_alloc_sync_skcipher(kctx->gk5e->encrypt_name, 0, 0);
->>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	if (IS_ERR(cipher))
 		return PTR_ERR(cipher);
 
@@ -76,20 +68,12 @@ krb5_make_rc4_seq_num(struct krb5_ctx *kctx, int direction, s32 seqnum,
 
 	code = krb5_encrypt(cipher, cksum, plain, buf, 8);
 out:
-<<<<<<< HEAD
 	crypto_free_blkcipher(cipher);
-=======
-	crypto_free_sync_skcipher(cipher);
->>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	return code;
 }
 s32
 krb5_make_seq_num(struct krb5_ctx *kctx,
-<<<<<<< HEAD
 		struct crypto_blkcipher *key,
-=======
-		struct crypto_sync_skcipher *key,
->>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 		int direction,
 		u32 seqnum,
 		unsigned char *cksum, unsigned char *buf)
@@ -117,21 +101,13 @@ static s32
 krb5_get_rc4_seq_num(struct krb5_ctx *kctx, unsigned char *cksum,
 		     unsigned char *buf, int *direction, s32 *seqnum)
 {
-<<<<<<< HEAD
 	struct crypto_blkcipher *cipher;
-=======
-	struct crypto_sync_skcipher *cipher;
->>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	unsigned char plain[8];
 	s32 code;
 
 	dprintk("RPC:       %s:\n", __func__);
-<<<<<<< HEAD
 	cipher = crypto_alloc_blkcipher(kctx->gk5e->encrypt_name, 0,
 					CRYPTO_ALG_ASYNC);
-=======
-	cipher = crypto_alloc_sync_skcipher(kctx->gk5e->encrypt_name, 0, 0);
->>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	if (IS_ERR(cipher))
 		return PTR_ERR(cipher);
 
@@ -154,11 +130,7 @@ krb5_get_rc4_seq_num(struct krb5_ctx *kctx, unsigned char *cksum,
 	*seqnum = ((plain[0] << 24) | (plain[1] << 16) |
 					(plain[2] << 8) | (plain[3]));
 out:
-<<<<<<< HEAD
 	crypto_free_blkcipher(cipher);
-=======
-	crypto_free_sync_skcipher(cipher);
->>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 	return code;
 }
 
@@ -170,11 +142,7 @@ krb5_get_seq_num(struct krb5_ctx *kctx,
 {
 	s32 code;
 	unsigned char plain[8];
-<<<<<<< HEAD
 	struct crypto_blkcipher *key = kctx->seq;
-=======
-	struct crypto_sync_skcipher *key = kctx->seq;
->>>>>>> 2d431f5e18cc (gss_krb5: Remove VLA usage of skcipher)
 
 	dprintk("RPC:       krb5_get_seq_num:\n");
 
