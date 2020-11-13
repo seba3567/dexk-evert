@@ -383,15 +383,10 @@ scale_freq_capacity(const cpumask_t *cpus, unsigned long cur_freq,
 	unsigned long scale = (cur_freq << SCHED_CAPACITY_SHIFT) / max_freq;
 	int cpu;
 
-<<<<<<< HEAD
 	for_each_cpu(cpu, cpus) {
 		per_cpu(freq_scale, cpu) = scale;
 		per_cpu(max_freq_cpu, cpu) = max_freq;
 	}
-=======
-	for_each_cpu(cpu, cpus)
-		per_cpu(freq_scale, cpu) = scale;
->>>>>>> d35c49e77f42 (cpufreq: remove max frequency capping from scale_freq_capacity())
 
 	pr_debug("cpus %*pbl cur freq/max freq %lu/%lu kHz freq scale %lu\n",
 		 cpumask_pr_args(cpus), cur_freq, max_freq, scale);
@@ -2433,12 +2428,9 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
 			CPUFREQ_NOTIFY, new_policy);
 
-<<<<<<< HEAD
 	scale_max_freq_capacity(policy->cpus, policy->max);
 	scale_min_freq_capacity(policy->cpus, policy->min);
 
-=======
->>>>>>> d35c49e77f42 (cpufreq: remove max frequency capping from scale_freq_capacity())
 	policy->min = new_policy->min;
 	policy->max = new_policy->max;
 	trace_cpu_frequency_limits(policy->max, policy->min, policy->cpu);
