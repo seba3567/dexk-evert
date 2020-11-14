@@ -92,7 +92,7 @@ struct sync_timeline_ops {
 struct sync_timeline {
 	struct kref		kref;
 	const struct sync_timeline_ops	*ops;
-	char			name[64];
+	char			name[32];
 
 	/* protected by child_list_lock */
 	bool			destroyed;
@@ -154,9 +154,7 @@ struct sync_fence_cb {
 struct sync_fence {
 	struct file		*file;
 	struct kref		kref;
-#ifdef CONFIG_SYNC_DEBUG
-	char			name[64];
-#endif
+	char			name[32];
 #ifdef CONFIG_DEBUG_FS
 	struct list_head	sync_fence_list;
 #endif
@@ -295,18 +293,9 @@ void sync_fence_put(struct sync_fence *fence);
  * @fence:	fence to install
  * @fd:		file descriptor in which to install the fence
  *
- * Installs @fence into @fd.  @fd's should be acquired through
- * get_unused_fd_flags(O_CLOEXEC).
+ * Installs @fence into @fd.  @fd's should be acquired through get_unused_fd().
  */
 void sync_fence_install(struct sync_fence *fence, int fd);
-
-/**
- * sync_fence_signaled() - checks if the fence has already signaled
- * @fence:		fence to check
- *
- * Returns true if @fence has already signaled.
- */
-bool sync_fence_signaled(struct sync_fence *fence);
 
 /**
  * sync_fence_wait_async() - registers and async wait on the fence
@@ -345,20 +334,21 @@ int sync_fence_cancel_async(struct sync_fence *fence,
  */
 int sync_fence_wait(struct sync_fence *fence, long timeout);
 
-#if defined(CONFIG_DEBUG_FS) && defined(CONFIG_DEBUG_TIMELINE)
-void sync_timeline_debug_add(struct sync_timeline *obj);
-void sync_timeline_debug_remove(struct sync_timeline *obj);
-void sync_fence_debug_add(struct sync_fence *fence);
-void sync_fence_debug_remove(struct sync_fence *fence);
-void sync_dump(void);
-#else
-static void inline sync_timeline_debug_add(struct sync_timeline *obj) {}
-static void inline sync_timeline_debug_remove(struct sync_timeline *obj) {}
-static void inline sync_fence_debug_add(struct sync_fence *fence) {}
-static void inline sync_fence_debug_remove(struct sync_fence *fence) {}
-static void inline sync_dump(void) {}
-#endif
+#ifdef CONFIG_DEBUG_FS
 
+extern void sync_timeline_debug_add(struct sync_timeline *obj);
+extern void sync_timeline_debug_remove(struct sync_timeline *obj);
+extern void sync_fence_debug_add(struct sync_fence *fence);
+extern void sync_fence_debug_remove(struct sync_fence *fence);
+extern void sync_dump(void);
+
+#else
+# define sync_timeline_debug_add(obj)
+# define sync_timeline_debug_remove(obj)
+# define sync_fence_debug_add(fence)
+# define sync_fence_debug_remove(fence)
+# define sync_dump()
+#endif
 int sync_fence_wake_up_wq(wait_queue_t *curr, unsigned mode,
 				 int wake_flags, void *key);
 
