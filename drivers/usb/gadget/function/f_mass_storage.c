@@ -1,5 +1,7 @@
 /*
  * f_mass_storage.c -- Mass Storage USB Composite Function
+ */*
+ * f_mass_storage.c -- Mass Storage USB Composite Function
  *
  * Copyright (C) 2003-2008 Alan Stern
  * Copyright (C) 2009 Samsung Electronics
@@ -208,7 +210,6 @@
 #include <linux/kref.h>
 #include <linux/kthread.h>
 #include <linux/limits.h>
-#include <linux/reboot.h>
 #include <linux/rwsem.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
@@ -227,16 +228,9 @@
 
 
 /*------------------------------------------------------------------------*/
-
+#define PAGE_CACHE_SIZE PAGE_SIZE
 #define FSG_DRIVER_DESC		"Mass Storage Function"
 #define FSG_DRIVER_VERSION	"2009/09/11"
-
-enum fsg_restart_type {
-	FSG_RESTART_NONE,
-	FSG_REBOOT,
-	FSG_REBOOT_BL,
-};
-
 
 static const char fsg_string_interface[] = "Mass Storage";
 
@@ -326,8 +320,6 @@ struct fsg_common {
 	char inquiry_string[8 + 16 + 4 + 1];
 
 	struct kref		ref;
-	enum fsg_restart_type   restart_type;
-	struct delayed_work     restart_work;
 };
 
 struct fsg_dev {
@@ -1243,105 +1235,227 @@ static int do_read_header(struct fsg_common *common, struct fsg_buffhd *bh)
 	return 8;
 }
 
-struct toc_header {
-	u8 data_len_msb;
-	u8 data_len_lsb;
-	u8 first_track_number;
-	u8 last_track_number;
-};
-
-struct toc_descriptor {
-	u8 ctrl;
-	u8 adr;
-	u8 tno;
-	u8 point;
-	u8 min;
-	u8 sec;
-	u8 frame;
-	u8 zero;
-	u8 pmin;
-	u8 psec;
-	u8 pframe;
-};
-
-static int build_toc_response_buf(u8 *dest)
+static void _lba_to_msf(u8 *buf, int lba)
 {
-	struct toc_header *pheader = (struct toc_header *)dest;
-	struct toc_descriptor *pdesc;
-
-	/* build header */
-	pheader->data_len_msb = 0x00;
-	pheader->data_len_lsb = 0x2E; /* TOC data length */
-	pheader->first_track_number = 0x01;
-	pheader->last_track_number = 0x01;
-
-	/* toc descriptor 1 */
-	pdesc = (struct toc_descriptor *)&dest[4];
-	pdesc->ctrl = 0x01;
-	pdesc->adr = 0x16;
-	pdesc->tno = 0x00;
-	pdesc->point = 0xA0;
-	pdesc->min = 0x00;
-	pdesc->sec = 0x00;
-	pdesc->frame = 0x00;
-	pdesc->zero = 0x00;
-	pdesc->pmin = 0x01;     /* first track number */
-	pdesc->psec = 0x00;
-	pdesc->pframe = 0x00;
-
-	/* toc descriptor 2 */
-	pdesc = pdesc + 1;
-	pdesc->ctrl = 0x01;
-	pdesc->adr = 0x16;
-	pdesc->tno = 0x00;
-	pdesc->point = 0xA1;
-	pdesc->min = 0x00;
-	pdesc->sec = 0x00;
-	pdesc->frame = 0x00;
-	pdesc->zero = 0x00;
-	pdesc->pmin = 0x01;     /* last track number */
-	pdesc->psec = 0x00;
-	pdesc->pframe = 0x00;
-
-	/* toc descriptor 3 */
-	pdesc = pdesc + 1;
-	pdesc->ctrl = 0x01;
-	pdesc->adr = 0x16;
-	pdesc->tno = 0x00;
-	pdesc->point = 0xA2;
-	pdesc->min = 0x00;
-	pdesc->sec = 0x00;
-	pdesc->frame = 0x00;
-	pdesc->zero = 0x00;
-	pdesc->pmin = 0x4F;     /* pmin, psec, pframe represents */
-	pdesc->psec = 0x21;     /* start position of lead-out */
-	pdesc->pframe = 0x029;
-
-	/* toc descriptor 4 */
-	pdesc = pdesc + 1;
-	pdesc->ctrl = 0x01;
-	pdesc->adr = 0x14;
-	pdesc->tno = 0x00;
-	pdesc->point = 0x01;
-	pdesc->min = 0x00;
-	pdesc->sec = 0x00;
-	pdesc->frame = 0x00;
-	pdesc->zero = 0x00;
-	pdesc->pmin = 0x00;     /* pmin, psec, pframe represents */
-	pdesc->psec = 0x02;     /* start position of track */
-	pdesc->pframe = 0x00;
-
-	/* return total packet length */
-	return (sizeof(struct toc_descriptor)*4) + sizeof(struct toc_header);
+	lba += 150;
+	buf[0] = (lba / 75) / 60;
+	buf[1] = (lba / 75) % 60;
+	buf[2] = lba % 75;
 }
-
+static int _read_toc_raw(struct fsg_common *common,
+		struct fsg_buffhd *bh)
+{
+	struct fsg_lun *curlun = common->curlun;
+	u8 *buf = (u8 *) bh->buf;
+	u8 *q;
+	int len;
+	int msf = common->cmnd[1] & 0x02;
+	q = buf + 2;
+	*q++ = 1; /* first session */
+	*q++ = 1; /* last session */
+	*q++ = 1; /* session number */
+	*q++ = 0x14; /* data track */
+	*q++ = 0; /* track number */
+	*q++ = 0xa0; /* lead-in */
+	*q++ = 0; /* min */
+	*q++ = 0; /* sec */
+	*q++ = 0; /* frame */
+	*q++ = 0;
+	*q++ = 1; /* first track */
+	*q++ = 0x00; /* disk type */
+	*q++ = 0x00;
+	*q++ = 1; /* session number */
+	*q++ = 0x14; /* data track */
+	*q++ = 0; /* track number */
+	*q++ = 0xa1;
+	*q++ = 0; /* min */
+	*q++ = 0; /* sec */
+	*q++ = 0; /* frame */
+	*q++ = 0;
+	*q++ = 1; /* last track */
+	*q++ = 0x00;
+	*q++ = 0x00;
+	*q++ = 1; /* session number */
+	*q++ = 0x14; /* data track */
+	*q++ = 0; /* track number */
+	*q++ = 0xa2; /* lead-out */
+	*q++ = 0; /* min */
+	*q++ = 0; /* sec */
+	*q++ = 0; /* frame */
+	if (msf) {
+		*q++ = 0; /* reserved */
+		_lba_to_msf(q, curlun->num_sectors);
+		q += 3;
+	} else {
+		put_unaligned_be32(curlun->num_sectors, q);
+		q += 4;
+	}
+	*q++ = 1; /* session number */
+	*q++ = 0x14; /* ADR, control */
+	*q++ = 0;    /* track number */
+	*q++ = 1;    /* point */
+	*q++ = 0; /* min */
+	*q++ = 0; /* sec */
+	*q++ = 0; /* frame */
+	if (msf) {
+		*q++ = 0;
+		_lba_to_msf(q, 0);
+		q += 3;
+	} else {
+		*q++ = 0;
+		*q++ = 0;
+		*q++ = 0;
+		*q++ = 0;
+	}
+	len = q - buf;
+	put_unaligned_be16(len - 2, buf);
+	return len;
+}
+static void cd_data_to_raw(u8 *buf, int lba)
+{
+	/* sync bytes */
+	buf[0] = 0x00;
+	memset(buf + 1, 0xff, 10);
+	buf[11] = 0x00;
+	buf += 12;
+	/* MSF */
+	_lba_to_msf(buf, lba);
+	buf[3] = 0x01; /* mode 1 data */
+	buf += 4;
+	/* data */
+	buf += 2048;
+	/* XXX: ECC not computed */
+	memset(buf, 0, 288);
+}
+static int do_read_cd(struct fsg_common *common)
+{
+	struct fsg_lun *curlun = common->curlun;
+	struct fsg_buffhd *bh;
+	int rc;
+	u32 lba;
+	u32 amount_left;
+	u32 nb_sectors, transfer_request;
+	loff_t file_offset, file_offset_tmp;
+	unsigned int amount;
+	unsigned int partial_page;
+	ssize_t nread;
+	nb_sectors = (common->cmnd[6] << 16) |
+			(common->cmnd[7] << 8) | common->cmnd[8];
+	lba = get_unaligned_be32(&common->cmnd[2]);
+	if (nb_sectors == 0)
+		return 0;
+	if (lba >= curlun->num_sectors) {
+		curlun->sense_data =
+			SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
+		return -EINVAL;
+	}
+	transfer_request = common->cmnd[9];
+	if ((transfer_request & 0xf8) == 0xf8) {
+		file_offset = ((loff_t) lba) << 11;
+		/* read all data  - 2352 byte */
+		amount_left = 2352;
+	} else {
+		file_offset = ((loff_t) lba) << 9;
+		/* Carry out the file reads */
+		amount_left = common->data_size_from_cmnd;
+	}
+	if (unlikely(amount_left == 0))
+		return -EIO; /* No default reply */
+	for (;;) {
+		/*
+		 * Figure out how much we need to read:
+		 * Try to read the remaining amount.
+		 * But don't read more than the buffer size.
+		 * And don't try to read past the end of the file.
+		 * Finally, if we're not at a page boundary, don't read past
+		 *	the next page.
+		 * If this means reading 0 then we were asked to read past
+		 * the end of file.
+		 */
+		amount = min(amount_left, FSG_BUFLEN);
+		amount = min((loff_t) amount,
+				curlun->file_length - file_offset);
+		partial_page = file_offset & (PAGE_CACHE_SIZE - 1);
+		if (partial_page > 0)
+			amount = min(amount, (unsigned int) PAGE_CACHE_SIZE -
+					partial_page);
+		/* Wait for the next buffer to become available */
+		bh = common->next_buffhd_to_fill;
+		while (bh->state != BUF_STATE_EMPTY) {
+			rc = sleep_thread(common, true);
+			if (rc)
+				return rc;
+		}
+		/*
+		 * If we were asked to read past the end of file,
+		 * end with an empty buffer.
+		 */
+		if (amount == 0) {
+			curlun->sense_data =
+				SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
+			curlun->sense_data_info = file_offset >> 9;
+			curlun->info_valid = 1;
+			bh->inreq->length = 0;
+			bh->state = BUF_STATE_FULL;
+			break;
+		}
+		/* Perform the read */
+		file_offset_tmp = file_offset;
+		if ((transfer_request & 0xf8) == 0xf8) {
+			nread = vfs_read(curlun->filp,
+					((char __user *)bh->buf)+16,
+						amount, &file_offset_tmp);
+		} else {
+			nread = vfs_read(curlun->filp,
+					(char __user *)bh->buf,
+					amount, &file_offset_tmp);
+		}
+		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
+				(unsigned long long) file_offset,
+				(int) nread);
+		if (signal_pending(current))
+			return -EINTR;
+		if (nread < 0) {
+			LDBG(curlun, "error in file read: %d\n",
+					(int) nread);
+			nread = 0;
+		} else if (nread < amount) {
+			LDBG(curlun, "partial file read: %d/%u\n",
+					(int) nread, amount);
+			nread -= (nread & 511);	/* Round down to a block */
+		}
+		file_offset  += nread;
+		amount_left  -= nread;
+		common->residue -= nread;
+		bh->inreq->length = nread;
+		bh->state = BUF_STATE_FULL;
+		/* If an error occurred, report it and its position */
+		if (nread < amount) {
+			curlun->sense_data = SS_UNRECOVERED_READ_ERROR;
+			curlun->sense_data_info = file_offset >> 9;
+			curlun->info_valid = 1;
+			break;
+		}
+		if (amount_left == 0)
+			break; /* No more left to read */
+		/* Send this buffer and go read some more */
+		if (!start_in_transfer(common, bh))
+			return -EIO;
+		common->next_buffhd_to_fill = bh->next;
+	}
+	if ((transfer_request & 0xf8) == 0xf8)
+		cd_data_to_raw(bh->buf, lba);
+	return -EIO; /* No default reply */
+}
 
 static int do_read_toc(struct fsg_common *common, struct fsg_buffhd *bh)
 {
 	struct fsg_lun	*curlun = common->curlun;
+	int		msf = common->cmnd[1] & 0x02;
 	int		start_track = common->cmnd[6];
 	u8		*buf = (u8 *)bh->buf;
-	int             toc_buf_len = 0;
+
+	int format = (common->cmnd[9] & 0xC0) >> 6;
 
 	if ((common->cmnd[1] & ~0x02) != 0 ||	/* Mask away MSF */
 			start_track > 1) {
@@ -1349,8 +1463,21 @@ static int do_read_toc(struct fsg_common *common, struct fsg_buffhd *bh)
 		return -EINVAL;
 	}
 
-	toc_buf_len = build_toc_response_buf(buf);
-	return toc_buf_len;
+	if (format == 2)
+		return _read_toc_raw(common, bh);
+
+	memset(buf, 0, 20);
+	buf[1] = (20-2);		/* TOC data length */
+	buf[2] = 1;			/* First track number */
+	buf[3] = 1;			/* Last track number */
+	buf[5] = 0x16;			/* Data track, copying allowed */
+	buf[6] = 0x01;			/* Only track is number 1 */
+	store_cdrom_address(&buf[8], msf, 0);
+
+	buf[13] = 0x16;			/* Lead-out track is data */
+	buf[14] = 0xAA;			/* Lead-out track number */
+	store_cdrom_address(&buf[16], msf, curlun->num_sectors);
+	return 20;
 }
 
 static int do_mode_sense(struct fsg_common *common, struct fsg_buffhd *bh)
@@ -2084,15 +2211,22 @@ static int do_scsi_command(struct fsg_common *common)
 			goto unknown_cmnd;
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
-		/* Set bit 9 to 1 in the mask because Mac Sends a value in byte
-		 * 9  of the READ_TOC . Windows does not set it, but changing
-		 * the mask covers both host envs.
-		 */
 		reply = check_command(common, 10, DATA_DIR_TO_HOST,
 				      (0xf<<6) | (1<<1), 1,
 				      "READ TOC");
 		if (reply == 0)
 			reply = do_read_toc(common, bh);
+		break;
+
+	case READ_CD:
+		common->data_size_from_cmnd = ((common->cmnd[6] << 16)
+			| (common->cmnd[7] << 8)
+			| (common->cmnd[8])) << 9;
+		reply = check_command(common, 12, DATA_DIR_TO_HOST,
+				(0xf<<2) | (7<<7), 1,
+				"READ CD");
+		if (reply == 0)
+			reply = do_read_cd(common);
 		break;
 
 	case READ_FORMAT_CAPACITIES:
@@ -2183,35 +2317,6 @@ static int do_scsi_command(struct fsg_common *common)
 				      "WRITE(12)");
 		if (reply == 0)
 			reply = do_write(common);
-		break;
-
-	case SC_REBOOT:
-		common->data_size_from_cmnd = 0;
-		reply = check_command(common, common->cmnd_size,
-					DATA_DIR_NONE, 0, 0, "REBOOT BL");
-		if (reply == 0) {
-			common->curlun->sense_data = SS_INVALID_COMMAND;
-			reply = -EINVAL;
-		} else {
-			pr_err("Triggered Reboot from SCSI Command\n");
-			common->restart_type = FSG_REBOOT;
-			schedule_delayed_work(&common->restart_work,
-						msecs_to_jiffies(1000));
-		}
-		break;
-	case SC_REBOOT_2:
-		common->data_size_from_cmnd = 0;
-		reply = check_command(common, common->cmnd_size,
-					DATA_DIR_NONE, 0, 0, "REBOOT");
-		if (reply == 0) {
-			common->curlun->sense_data = SS_INVALID_COMMAND;
-			reply = -EINVAL;
-		} else {
-			pr_err("Triggered Reboot BL from SCSI Command\n");
-			common->restart_type = FSG_REBOOT_BL;
-			schedule_delayed_work(&common->restart_work,
-						msecs_to_jiffies(1000));
-		}
 		break;
 
 	/*
@@ -2833,32 +2938,6 @@ static inline int fsg_num_buffers_validate(unsigned int fsg_num_buffers)
 	return -EINVAL;
 }
 
-static int disable_restarts;
-module_param(disable_restarts, int, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(disable_restarts, "Disable SCSI Initiated Reboots");
-static void fsg_restart_work(struct work_struct *work)
-{
-	struct fsg_common *common = container_of(work,
-					struct fsg_common,
-					restart_work.work);
-
-	if (disable_restarts) {
-		pr_err("SCSI Reboots Disabled\n");
-		return;
-	}
-
-	switch (common->restart_type) {
-	case FSG_REBOOT:
-		kernel_restart("");
-		break;
-	case FSG_REBOOT_BL:
-		kernel_restart("bootloader");
-		break;
-	default:
-		break;
-	}
-}
-
 static struct fsg_common *fsg_common_setup(struct fsg_common *common)
 {
 	if (!common) {
@@ -2874,7 +2953,6 @@ static struct fsg_common *fsg_common_setup(struct fsg_common *common)
 	kref_init(&common->ref);
 	init_completion(&common->thread_notifier);
 	init_waitqueue_head(&common->fsg_wait);
-	INIT_DELAYED_WORK(&common->restart_work, fsg_restart_work);
 	common->state = FSG_STATE_TERMINATED;
 	memset(common->luns, 0, sizeof(common->luns));
 
@@ -3466,6 +3544,8 @@ static struct config_group *fsg_lun_make(struct config_group *group,
 
 	memset(&config, 0, sizeof(config));
 	config.removable = true;
+	config.cdrom = true;
+	config.ro = true;
 
 	ret = fsg_common_create_lun(fsg_opts->common, &config, num, name,
 				    (const char **)&group->cg_item.ci_name);
