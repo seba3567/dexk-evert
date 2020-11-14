@@ -6201,7 +6201,7 @@ static int compute_energy(struct energy_env *eenv)
 				}
 
 
-				if (cpumask_equal(sched_group_span(sg), sched_group_cpus(eenv->sg_top)) &&
+				if (cpumask_equal(sched_group_span(sg), sched_group_span(eenv->sg_top)) &&
 					sd->child)
 					goto next_cpu;
 
