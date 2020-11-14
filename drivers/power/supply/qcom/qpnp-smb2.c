@@ -526,7 +526,6 @@ static int smb2_usb_get_prop(struct power_supply *psy,
 		val->intval = get_client_vote(chg->usb_icl_votable,
 					      USB_PSY_VOTER);
 		break;
-<<<<<<< HEAD
 
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
 		rc = smblib_get_prop_usb_system_temp_level(chg, val);
@@ -535,13 +534,6 @@ static int smb2_usb_get_prop(struct power_supply *psy,
 		val->intval = chg->mmi.usb_thermal_levels;
 		break;
 
-=======
-#ifdef CONFIG_MACH_XIAOMI_SDM660
-	case POWER_SUPPLY_PROP_RERUN_APSD:
-		val->intval = chg->float_rerun_apsd;
-		break;
-#endif
->>>>>>> d1fe50626437 (drivers: power: expose property rerun apsd status)
 	default:
 		pr_err("get prop %d is not supported in usb\n", psp);
 		rc = -EINVAL;
