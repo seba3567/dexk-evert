@@ -156,7 +156,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x0>;
-			clock-frequency = <2208000000>;
+			clock-frequency = <2515200000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -187,7 +187,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x1>;
-			clock-frequency = <2208000000>;
+			clock-frequency = <2515200000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -212,7 +212,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x2>;
-			clock-frequency = <2208000000>;
+			clock-frequency = <2515200000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -237,7 +237,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x3>;
-			clock-frequency = <2208000000>;
+			clock-frequency = <2515200000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -312,6 +312,7 @@ energy_costs: energy-costs {
 				2150400	1592
 				2208000	1632
 				2457600	2080
+                                2515200	2160
 			>;
 			idle-cost-data = <
 				100 80 60 40
@@ -320,6 +321,7 @@ energy_costs: energy-costs {
 
 		CPU_COST_1: core-cost1 {
 			busy-cost-data = <
+                                300000	20
 				614400	40
 				883200	69
 				1094400	82
@@ -335,6 +337,7 @@ energy_costs: energy-costs {
 
 		CLUSTER_COST_0: cluster-cost0 {
 			busy-cost-data = <
+                                300000	8
 				787200	12
 				1113600	14
 				1344000	17
@@ -345,6 +348,7 @@ energy_costs: energy-costs {
 				2150400	37
 				2208000	44
 				2457600	45
+                                2515200	46
 			>;
 			idle-cost-data = <
 				4 3 2 1
@@ -353,6 +357,7 @@ energy_costs: energy-costs {
 
 		CLUSTER_COST_1: cluster-cost1 {
 			busy-cost-data = <
+                                300000	2
 				614400	4
 				883200	5
 				1094400	7
@@ -395,7 +400,7 @@ energy_costs: energy-costs {
 					dev = "/dev/block/platform/soc/c0c4000.sdhci/by-name/oem";
 					type = "ext4";
 					mnt_flags = "ro,barrier=1,discard";
-					fsmgr_flags = "wait,slotselect,verify";
+					fsmgr_flags = "wait,slotselect";
 					status = "ok";
 				};
 			};
@@ -1320,8 +1325,7 @@ energy_costs: energy-costs {
 			< 1382400 >,
 			< 1536000 >,
 			< 1728000 >,
-			< 1843200 >,
-                        < 2016000 >;
+			< 1843200 >;
 	};
 
 	ipa_hw: qcom,ipa@14780000 {
@@ -1422,8 +1426,7 @@ energy_costs: energy-costs {
 			<  1382400000 0x04040048 0x07390039 0x2 5 >,
 			<  1536000000 0x04040050 0x08400040 0x2 6 >,
 			<  1728000000 0x0404005a 0x09480048 0x2 7 >,
-			<  1843200000 0x04040060 0x094c004c 0x3 8 >,
-                        <  2016000000 0x04040069 0x0a540054 0x2 9 >;
+			<  1843200000 0x04040060 0x094c004c 0x3 8 >;
 
 		qcom,perfcl-speedbin0-v0 =
 			<   300000000 0x0004000f 0x01200020 0x1 1 >,
