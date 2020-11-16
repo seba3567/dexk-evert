@@ -50,7 +50,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x100>;
-			clock-frequency = <1843200000>;
+			clock-frequency = <2016000000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile0>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
@@ -81,7 +81,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x101>;
-			clock-frequency = <1843200000>;
+			clock-frequency = <2016000000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile1>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
@@ -106,7 +106,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x102>;
-			clock-frequency = <1843200000>;
+			clock-frequency = <2016000000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile2>;
  			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
@@ -131,7 +131,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x103>;
-			clock-frequency = <1843200000>;
+			clock-frequency = <2016000000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile3>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
@@ -156,7 +156,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x0>;
-			clock-frequency = <2208000000>;
+			clock-frequency = <2515200000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -187,7 +187,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x1>;
-			clock-frequency = <2208000000>;
+			clock-frequency = <2515200000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -212,7 +212,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x2>;
-			clock-frequency = <2208000000>;
+			clock-frequency = <2515200000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -237,7 +237,7 @@
 			device_type = "cpu";
 			compatible = "arm,kryo";
 			reg = <0x0 0x3>;
-			clock-frequency = <2208000000>;
+			clock-frequency = <2515200000>;
 			enable-method = "psci";
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -311,7 +311,7 @@ energy_costs: energy-costs {
 				2016000	1251
 				2150400	1592
 				2208000	1632
-				2457600	2080
+				2515200	2160
 			>;
 			idle-cost-data = <
 				100 80 60 40
@@ -327,6 +327,7 @@ energy_costs: energy-costs {
 				1536000	158
 				1728000	225
 				1843200	285
+                                2016000	465
 			>;
 			idle-cost-data = <
 				20 16 10 8
@@ -344,7 +345,7 @@ energy_costs: energy-costs {
 				2016000	33
 				2150400	37
 				2208000	44
-				2457600	45
+				2515200	46
 			>;
 			idle-cost-data = <
 				4 3 2 1
@@ -360,6 +361,7 @@ energy_costs: energy-costs {
 				1536000	9
 				1728000	11
 				1843200	13
+                                2016000 15
 			>;
 			idle-cost-data = <
 				4 3 2 1
