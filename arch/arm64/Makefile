@@ -19,11 +19,7 @@ ifeq ($(CONFIG_RELOCATABLE), y)
 # Pass --no-apply-dynamic-relocs to restore pre-binutils-2.27 behaviour
 # for relative relocs, since this leads to better Image compression
 # with the relocation offsets always being zero.
-<<<<<<< HEAD
 LDFLAGS_vmlinux		+= -Bsymbolic -z notext -z norelro \
-=======
-LDFLAGS_vmlinux		+= -shared -Bsymbolic -z notext -z norelro \
->>>>>>> 73f42ce7c1b0 (UPSTREAM: arm64: relocatable: fix inconsistencies in linker script and options)
 			$(call ld-option, --no-apply-dynamic-relocs)
 
 # Pass -shared for bfd and -pie for lld to minimize Image size on both
