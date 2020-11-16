@@ -579,7 +579,7 @@ ext4_xattr_release_block(handle_t *handle, struct inode *inode,
 		 * This must happen under buffer lock for
 		 * ext4_xattr_block_set() to reliably detect freed block
 		 */
-		mb_cache_entry_delete_block(ext4_mb_cache, hash, bh->b_blocknr);
+		mb_cache_entry_delete(ext4_mb_cache, hash, bh->b_blocknr);
 		get_bh(bh);
 		unlock_buffer(bh);
 		ext4_free_blocks(handle, inode, bh, 0, 1,
@@ -588,7 +588,6 @@ ext4_xattr_release_block(handle_t *handle, struct inode *inode,
 	} else {
 		ref--;
 		BHDR(bh)->h_refcount = cpu_to_le32(ref);
-<<<<<<< HEAD
 		if (ref == EXT4_XATTR_REFCOUNT_MAX - 1) {
 			struct mb_cache_entry *ce;
 
@@ -601,17 +600,6 @@ ext4_xattr_release_block(handle_t *handle, struct inode *inode,
 		}
 
 		ext4_xattr_block_csum_set(inode, bh);
-		if (ref == EXT4_XATTR_REFCOUNT_MAX - 1) {
-			struct mb_cache_entry *ce;
-
-			ce = mb_cache_entry_get(ext4_mb_cache, hash,
-						bh->b_blocknr);
-			if (ce) {
-				ce->e_reusable = 1;
-				mb_cache_entry_put(ext4_mb_cache, ce);
-			}
-		}
-
 		/*
 		 * Beware of this ugliness: Releasing of xattr block references
 		 * from different inodes can race and so we have to protect
@@ -1686,7 +1674,7 @@ ext4_xattr_cache_find(struct inode *inode, struct ext4_xattr_header *header,
 		bh = sb_bread(inode->i_sb, ce->e_value);
 		if (!bh) {
 			EXT4_ERROR_INODE(inode, "block %lu read error",
-					 (unsigned long) ce->e_block);
+					 (unsigned long)ce->e_value);
 		} else if (ext4_xattr_cmp(header, BHDR(bh)) == 0) {
 			*pce = ce;
 			return bh;
