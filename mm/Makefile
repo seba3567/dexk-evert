@@ -29,7 +29,6 @@ mmu-$(CONFIG_MMU)	:= gup.o highmem.o memory.o mincore.o \
 			   mlock.o mmap.o mprotect.o mremap.o msync.o rmap.o \
 			   vmalloc.o pagewalk.o pgtable-generic.o
 
-<<<<<<< HEAD
 ifdef CONFIG_MM_EVENT_STAT
 mmu-$(CONFIG_MMU)	+= mm_event.o
 endif
