@@ -353,12 +353,9 @@ int pm_qos_update_target(struct pm_qos_constraints *c,
 	pm_qos_set_value(c, curr_value);
 	pm_qos_set_value_for_cpus(c, &cpus);
 
-<<<<<<< HEAD
 	spin_unlock(&pm_qos_lock);
 
 //	trace_pm_qos_update_target(action, prev_value, curr_value);
-=======
->>>>>>> d3df0bc2a3c4 (qos: Execute notifier callbacks atomically)
 	/*
 	 * if cpu mask bits are set, call the notifier call chain
 	 * to update the new qos restriction for the cores
@@ -372,11 +369,6 @@ int pm_qos_update_target(struct pm_qos_constraints *c,
 	} else {
 		ret = 0;
 	}
-
-	spin_unlock(&pm_qos_lock);
-
-	trace_pm_qos_update_target(action, prev_value, curr_value);
-
 	return ret;
 }
 
