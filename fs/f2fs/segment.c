@@ -1158,7 +1158,7 @@ static void __init_discard_policy(struct f2fs_sb_info *sbi,
 
 	dpolicy->max_requests = DEF_MAX_DISCARD_REQUEST;
 	dpolicy->io_aware_gran = MAX_PLIST_NUM;
-	dpolicy->timeout = 0;
+	dpolicy->timeout = false;
 
 	if (discard_type == DPOLICY_BG) {
 		dpolicy->min_interval = DEF_MIN_DISCARD_ISSUE_TIME;
@@ -1179,10 +1179,10 @@ static void __init_discard_policy(struct f2fs_sb_info *sbi,
 	} else if (discard_type == DPOLICY_FSTRIM) {
 		dpolicy->io_aware = false;
 	} else if (discard_type == DPOLICY_UMOUNT) {
-		dpolicy->max_requests = UINT_MAX;
 		dpolicy->io_aware = false;
 		/* we need to issue all to keep CP_TRIMMED_FLAG */
 		dpolicy->granularity = 1;
+		dpolicy->timeout = true;
 	}
 }
 
@@ -1536,6 +1536,8 @@ next:
 
 	return issued;
 }
+static unsigned int __wait_all_discard_cmd(struct f2fs_sb_info *sbi,
+					struct discard_policy *dpolicy);
 
 static int __issue_discard_cmd(struct f2fs_sb_info *sbi,
 					struct discard_policy *dpolicy)
@@ -1544,15 +1546,17 @@ static int __issue_discard_cmd(struct f2fs_sb_info *sbi,
 	struct list_head *pend_list;
 	struct discard_cmd *dc, *tmp;
 	struct blk_plug plug;
-	int i, issued = 0;
+	int i, issued;
 	bool io_interrupted = false;
 
-	if (dpolicy->timeout != 0)
-		f2fs_update_time(sbi, dpolicy->timeout);
+	if (dpolicy->timeout)
+		f2fs_update_time(sbi, UMOUNT_DISCARD_TIMEOUT);
 
+retry:
+	issued = 0;
 	for (i = MAX_PLIST_NUM - 1; i >= 0; i--) {
-		if (dpolicy->timeout != 0 &&
-				f2fs_time_over(sbi, dpolicy->timeout))
+		if (dpolicy->timeout &&
+				f2fs_time_over(sbi, UMOUNT_DISCARD_TIMEOUT))
 			break;
 
 		if (i + 1 < dpolicy->granularity)
@@ -1573,8 +1577,8 @@ static int __issue_discard_cmd(struct f2fs_sb_info *sbi,
 		list_for_each_entry_safe(dc, tmp, pend_list, list) {
 			f2fs_bug_on(sbi, dc->state != D_PREP);
 
-			if (dpolicy->timeout != 0 &&
-				f2fs_time_over(sbi, dpolicy->timeout))
+			if (dpolicy->timeout &&
+				f2fs_time_over(sbi, UMOUNT_DISCARD_TIMEOUT))
 				break;
 
 			if (dpolicy->io_aware && i < dpolicy->io_aware_gran &&
@@ -1594,6 +1598,11 @@ next:
 
 		if (issued >= dpolicy->max_requests || io_interrupted)
 			break;
+	}
+
+	if (dpolicy->type == DPOLICY_UMOUNT && issued) {
+		__wait_all_discard_cmd(sbi, dpolicy);
+		goto retry;
 	}
 
 	if (!issued && io_interrupted)
@@ -1753,7 +1762,6 @@ bool f2fs_issue_discard_timeout(struct f2fs_sb_info *sbi)
 
 	__init_discard_policy(sbi, &dpolicy, DPOLICY_UMOUNT,
 					dcc->discard_granularity);
-	dpolicy.timeout = UMOUNT_DISCARD_TIMEOUT;
 	__issue_discard_cmd(sbi, &dpolicy);
 	dropped = __drop_discard_cmd(sbi);
 
@@ -3176,6 +3184,14 @@ void f2fs_allocate_data_block(struct f2fs_sb_info *sbi, struct page *page,
 		type = CURSEG_COLD_DATA;
 	}
 
+	/*
+	 * We need to wait for node_write to avoid block allocation during
+	 * checkpoint. This can only happen to quota writes which can cause
+	 * the below discard race condition.
+	 */
+	if (IS_DATASEG(type))
+		down_write(&sbi->node_write);
+
 	down_read(&SM_I(sbi)->curseg_lock);
 
 	mutex_lock(&curseg->curseg_mutex);
@@ -3240,6 +3256,9 @@ void f2fs_allocate_data_block(struct f2fs_sb_info *sbi, struct page *page,
 	mutex_unlock(&curseg->curseg_mutex);
 
 	up_read(&SM_I(sbi)->curseg_lock);
+
+	if (IS_DATASEG(type))
+		up_write(&sbi->node_write);
 
 	if (put_pin_sem)
 		up_read(&sbi->pin_sem);
@@ -3365,7 +3384,7 @@ int f2fs_inplace_write_data(struct f2fs_io_info *fio)
 
 	stat_inc_inplace_blocks(fio->sbi);
 
-	if (fio->bio)
+	if (fio->bio && !(SM_I(sbi)->ipu_policy & (1 << F2FS_IPU_NOCACHE)))
 		err = f2fs_merge_page_bio(fio);
 	else
 		err = f2fs_submit_page_bio(fio);
@@ -3489,10 +3508,7 @@ void f2fs_wait_on_page_writeback(struct page *page,
 	if (PageWriteback(page)) {
 		struct f2fs_sb_info *sbi = F2FS_P_SB(page);
 
-		/* submit cached LFS IO */
 		f2fs_submit_merged_write_cond(sbi, NULL, page, 0, type);
-		/* sbumit cached IPU IO */
-		f2fs_submit_merged_ipu_write(sbi, NULL, page);
 		if (ordered) {
 			wait_on_page_writeback(page);
 			f2fs_bug_on(sbi, locked && PageWriteback(page));
@@ -4445,280 +4461,6 @@ out:
 	}
 	return 0;
 }
-
-#ifdef CONFIG_BLK_DEV_ZONED
-
-static int check_zone_write_pointer(struct f2fs_sb_info *sbi,
-				    struct f2fs_dev_info *fdev,
-				    struct blk_zone *zone)
-{
-	unsigned int s, wp_segno, wp_blkoff, zone_secno, zone_segno, segno;
-	block_t zone_block, wp_block, last_valid_block, b;
-	unsigned int log_sectors_per_block = sbi->log_blocksize - SECTOR_SHIFT;
-	int i;
-	struct seg_entry *se;
-
-	wp_block = fdev->start_blk + (zone->wp >> log_sectors_per_block);
-	wp_segno = GET_SEGNO(sbi, wp_block);
-	wp_blkoff = wp_block - START_BLOCK(sbi, wp_segno);
-	zone_block = fdev->start_blk + (zone->start >> log_sectors_per_block);
-	zone_segno = GET_SEGNO(sbi, zone_block);
-	zone_secno = GET_SEC_FROM_SEG(sbi, zone_segno);
-
-	if (zone_segno >= MAIN_SEGS(sbi))
-		return 0;
-
-	/*
-	 * If a curseg points to the zone, skip check because the zone
-	 * may have fsync data that valid block map does not mark.
-	 */
-	for (i = 0; i < NO_CHECK_TYPE; i++)
-		if (zone_secno == GET_SEC_FROM_SEG(sbi,
-						   CURSEG_I(sbi, i)->segno))
-			return 0;
-
-	/*
-	 * Get last valid block of the zone.
-	 */
-	last_valid_block = zone_block - 1;
-	for (s = 0; s < sbi->segs_per_sec; s++) {
-		segno = zone_segno + s;
-		se = get_seg_entry(sbi, segno);
-		for (b = 0; b < sbi->blocks_per_seg; b++)
-			if (f2fs_test_bit(b, se->cur_valid_map))
-				last_valid_block = START_BLOCK(sbi, segno) + b;
-	}
-
-	/*
-	 * If last valid block is beyond the write pointer, report the
-	 * inconsistency. This inconsistency does not cause write error
-	 * because the zone will not be selected for write operation until
-	 * it get discarded. Just report it.
-	 */
-	if (last_valid_block >= wp_block) {
-		f2fs_notice(sbi, "Valid block beyond write pointer: "
-			    "valid block[0x%x,0x%x] wp[0x%x,0x%x]",
-			    GET_SEGNO(sbi, last_valid_block),
-			    GET_BLKOFF_FROM_SEG0(sbi, last_valid_block),
-			    wp_segno, wp_blkoff);
-		return 0;
-	}
-
-	/*
-	 * If there is no valid block in the zone and if write pointer is
-	 * not at zone start, report the error to run fsck and mark the
-	 * zone as used.
-	 */
-	if (last_valid_block + 1 == zone_block && zone->wp != zone->start) {
-		f2fs_notice(sbi,
-			    "Zone without valid block has non-zero write "
-			    "pointer, run fsck to fix: wp[0x%x,0x%x]",
-			    wp_segno, wp_blkoff);
-		__set_inuse(sbi, zone_segno);
-		f2fs_stop_checkpoint(sbi, true);
-		set_sbi_flag(sbi, SBI_NEED_FSCK);
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
-static int check_dev_write_pointer(struct f2fs_sb_info *sbi,
-				   struct f2fs_dev_info *fdev) {
-	sector_t nr_sectors = fdev->bdev->bd_part->nr_sects;
-	sector_t sector = 0;
-	struct blk_zone *zones;
-	unsigned int i, nr_zones;
-	unsigned int n = 0;
-	int err = -EIO;
-
-	if (!bdev_is_zoned(fdev->bdev))
-		return 0;
-
-	zones = f2fs_kzalloc(sbi,
-			     array_size(F2FS_REPORT_NR_ZONES,
-					sizeof(struct blk_zone)),
-			     GFP_KERNEL);
-	if (!zones)
-		return -ENOMEM;
-
-	/* Get block zones type */
-	while (zones && sector < nr_sectors) {
-
-		nr_zones = F2FS_REPORT_NR_ZONES;
-		err = blkdev_report_zones(fdev->bdev, sector, zones, &nr_zones);
-		if (err)
-			break;
-		if (!nr_zones) {
-			err = -EIO;
-			break;
-		}
-
-		for (i = 0; i < nr_zones; i++) {
-			if (zones[i].type == BLK_ZONE_TYPE_SEQWRITE_REQ) {
-				err = check_zone_write_pointer(sbi, fdev,
-							       &zones[i]);
-				if (err)
-					break;
-			}
-			sector += zones[i].len;
-			n++;
-		}
-		if (err)
-			break;
-	}
-
-	kvfree(zones);
-
-	return err;
-}
-
-static struct f2fs_dev_info *get_target_zoned_dev(struct f2fs_sb_info *sbi,
-						  block_t zone_blkaddr)
-{
-	int i;
-
-	for (i = 0; i < sbi->s_ndevs; i++) {
-		if (!bdev_is_zoned(FDEV(i).bdev))
-			continue;
-		if (sbi->s_ndevs == 1 || (FDEV(i).start_blk <= zone_blkaddr &&
-					  zone_blkaddr <= FDEV(i).end_blk))
-			return &FDEV(i);
-	}
-
-	return NULL;
-}
-
-static int fix_curseg_write_pointer(struct f2fs_sb_info *sbi, int type,
-				    bool check_only)
-{
-	struct curseg_info *cs = CURSEG_I(sbi, type);
-	struct f2fs_dev_info *zbd;
-	struct blk_zone zone;
-	unsigned int cs_section, wp_segno, wp_blkoff, nr_zones, wp_sector_off;
-	block_t cs_zone_block, wp_block, cs_block;
-	unsigned int log_sectors_per_block = sbi->log_blocksize - SECTOR_SHIFT;
-	sector_t zone_sector;
-	int err;
-
-	cs_section = GET_SEC_FROM_SEG(sbi, cs->segno);
-	cs_zone_block = START_BLOCK(sbi, GET_SEG_FROM_SEC(sbi, cs_section));
-	cs_block = START_BLOCK(sbi, cs->segno) + cs->next_blkoff;
-
-	zbd = get_target_zoned_dev(sbi, cs_zone_block);
-	if (!zbd)
-		return 0;
-
-	/* report zone for the sector the curseg points to */
-	zone_sector = (sector_t)(cs_zone_block - zbd->start_blk)
-		<< log_sectors_per_block;
-	nr_zones = 1;
-	err = blkdev_report_zones(zbd->bdev, zone_sector, &zone, &nr_zones);
-	if (err) {
-		f2fs_err(sbi, "Report zone failed: %s errno=(%d)",
-			 zbd->path, err);
-		return err;
-	}
-
-	if (zone.type != BLK_ZONE_TYPE_SEQWRITE_REQ)
-		return 0;
-
-	wp_block = zbd->start_blk + (zone.wp >> log_sectors_per_block);
-	wp_segno = GET_SEGNO(sbi, wp_block);
-	wp_blkoff = wp_block - START_BLOCK(sbi, wp_segno);
-	wp_sector_off = zone.wp & GENMASK(log_sectors_per_block - 1, 0);
-
-	if (cs->segno == wp_segno && cs->next_blkoff == wp_blkoff &&
-	    wp_sector_off == 0)
-		return 0;
-
-	f2fs_notice(sbi, "Unaligned curseg[%d] with write pointer: "
-		    "curseg[0x%x,0x%x] wp[0x%x,0x%x]",
-		    type, cs->segno, cs->next_blkoff, wp_segno, wp_blkoff);
-
-	/* if check_only is specified, return error without fix */
-	if (check_only)
-		return -EIO;
-
-	f2fs_notice(sbi, "Assign new section to curseg[%d]: "
-		    "curseg[0x%x,0x%x]", type, cs->segno, cs->next_blkoff);
-	allocate_segment_by_default(sbi, type, true);
-
-	/* check consistency of the zone curseg pointed to */
-	if (check_zone_write_pointer(sbi, zbd, &zone))
-		return -EIO;
-
-	/* check newly assigned zone */
-	cs_section = GET_SEC_FROM_SEG(sbi, cs->segno);
-	cs_zone_block = START_BLOCK(sbi, GET_SEG_FROM_SEC(sbi, cs_section));
-
-	zbd = get_target_zoned_dev(sbi, cs_zone_block);
-	if (!zbd)
-		return 0;
-
-	zone_sector = (sector_t)(cs_zone_block - zbd->start_blk)
-		<< log_sectors_per_block;
-	nr_zones = 1;
-	err = blkdev_report_zones(zbd->bdev, zone_sector, &zone, &nr_zones);
-	if (err) {
-		f2fs_err(sbi, "Report zone failed: %s errno=(%d)",
-			 zbd->path, err);
-		return err;
-	}
-
-	if (zone.type != BLK_ZONE_TYPE_SEQWRITE_REQ)
-		return 0;
-
-	if (zone.wp != zone.start) {
-		f2fs_notice(sbi,
-			    "New section for curseg[%d] is not empty, "
-			    "run fsck to fix: curseg[0x%x,0x%x]",
-			    type, cs->segno, cs->next_blkoff);
-		__set_inuse(sbi, GET_SEGNO(sbi, cs_zone_block));
-		f2fs_stop_checkpoint(sbi, true);
-		set_sbi_flag(sbi, SBI_NEED_FSCK);
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
-int f2fs_fix_curseg_write_pointer(struct f2fs_sb_info *sbi, bool check_only)
-{
-	int i, ret;
-
-	for (i = 0; i < NO_CHECK_TYPE; i++) {
-		ret = fix_curseg_write_pointer(sbi, i, check_only);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
-
-int f2fs_check_write_pointer(struct f2fs_sb_info *sbi)
-{
-	int i, ret;
-
-	for (i = 0; i < sbi->s_ndevs; i++) {
-		ret = check_dev_write_pointer(sbi, &FDEV(i));
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
-#else
-int f2fs_fix_curseg_write_pointer(struct f2fs_sb_info *sbi, bool check_only)
-{
-	return 0;
-}
-
-int f2fs_check_write_pointer(struct f2fs_sb_info *sbi)
-{
-	return 0;
-}
-#endif
 
 /*
  * Update min, max modified time for cost-benefit GC algorithm
